@@ -1,0 +1,307 @@
+'use strict';
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+const E = require('./lib/engine');
+
+const PORT = process.env.PORT || 3000;
+const HISTORY = path.join(__dirname, 'data', 'game_history.json');
+const sessions = new Map();
+const TTL = 60 * 60 * 1000;
+
+const app = express();
+app.use(express.json({ limit: '10kb' }));
+app.use(express.static(path.join(__dirname, 'public')));
+
+// ── 기록 파일: 없거나 깨져도 빈 기록으로 시작 (재시작/초기화 안전) ──
+function readHistory() {
+  try {
+    const h = JSON.parse(fs.readFileSync(HISTORY, 'utf8'));
+    return Array.isArray(h) ? h : [];
+  } catch { return []; }
+}
+function appendHistory(rec) {
+  try {
+    const h = readHistory();
+    h.push(rec);
+    fs.mkdirSync(path.dirname(HISTORY), { recursive: true });
+    fs.writeFileSync(HISTORY, JSON.stringify(h.slice(-500)));
+  } catch (e) { console.warn('history write failed:', e.message); }
+}
+
+function quotesFor(s) {
+  const q = {};
+  for (const e of s.graph.adj[s.cur]) {
+    const to = E.other(e, s.cur);
+    for (const m of E.MODE_IDS) {
+      const base = E.timeAt(e.opts[m], m, s.used, s.event);   // 예고형 사건 반영 (출발 시각 기준)
+      if (base == null) continue;
+      const qt = E.quote(base, m, s.rem);
+      qt.stam = s.persona ? E.staminaCost(m, e.opts[m], s.persona) : 0;
+      q[`${to}:${m}`] = qt;
+    }
+  }
+  return q;
+}
+
+// vague(시각 미상) 사건은 시작되기 전까지 정확한 시각을 숨긴다
+function eventView(s) {
+  const ev = s.event;
+  if (!ev) return null;
+  const active = s.used >= ev.at;
+  return { icon: ev.icon, title: ev.title, text: ev.text, mode: ev.mode, off: !!ev.off, mul: ev.mul || null, active, at: ev.vague && !active ? null : ev.at };
+}
+
+function publicState(s) {
+  const g = s.graph;
+  return {
+    sessionId: s.id, mode: s.mode, round: s.round, scenario: s.scenario && {
+      id: s.scenario.id, title: s.scenario.title, text: s.scenario.text, tags: s.scenario.tags,
+    },
+    levelId: s.levelId || null, goals: s.goals || null,
+    event: eventView(s), errand: s.errand ? { ...s.errand, done: s.errandDone } : null,
+    week: s.weekId ? { weekId: s.weekId, day: s.scenario.day, name: s.scenario.name } : null,
+    stamina: s.persona ? { left: s.maxStamina - s.stamSpent, max: s.maxStamina } : null,
+    nodes: g.nodes.map(({ id, name, x, y }) => ({ id, name, x, y })),
+    edges: g.edges.map(({ id, a, b, opts }) => ({ id, a, b, opts })),
+    start: s.start, dest: s.dest, cur: s.cur,
+    limit: s.limit, used: s.used, resources: s.resources, resLeft: s.resources - s.spent,
+    path: s.path, status: s.status, rem: s.rem, quotes: quotesFor(s), transfer: E.cfg.transfer,
+    added: E.describeRound(s.round),
+  };
+}
+
+function finish(s, status, reason) {
+  s.status = status;
+  const opt = s.opt;
+  const eff = status === 'success' ? Math.min(1, opt.time / s.used) : 0;
+  const grade = status === 'success' ? E.gradeOf(eff) : '-';
+  const result = {
+    status, reason, grade,
+    ...(s.goals ? E.evalGoals(s.goals, status, s.used, s.spent, s.stamSpent, s.errandDone) : { stars: null, hit: null }),
+    efficiency: Math.round(eff * 100),
+    usedTime: s.used, usedRes: s.spent, limit: s.limit,
+    checks: {
+      arrived: status === 'success',
+      inTime: status === 'success' && s.used <= s.limit,
+      efficient: eff >= 0.8,
+    },
+    errandDone: s.errand ? s.errandDone : null,
+    story: status !== 'success' ? null : s.errand ? (s.errandDone ? s.errand.done : s.errand.skipped) : null,
+    optimal: opt,
+    hint: E.divergenceHint(s.graph, s.path, opt),
+  };
+  s.result = result;
+  const w = s.weekId && weeks.get(s.weekId);
+  if (w && w.day === s.scenario.day) w.pending = { status, left: s.resources - s.spent, errandDone: !!s.errandDone };
+  appendHistory({
+    at: new Date().toISOString(), mode: s.mode, round: s.round, scenario: s.scenario ? s.scenario.id : null,
+    level: s.levelId || null, stars: result.stars,
+    status, grade, efficiency: result.efficiency, time: s.used, res: s.spent,
+  });
+  return result;
+}
+
+// 남은 시간·자금 안에 더 이동할 수 있는 간선이 있는지
+function canMove(s) {
+  const left = s.limit - s.used, money = s.resources - s.spent, stam = s.maxStamina - s.stamSpent;
+  return Object.values(quotesFor(s)).some((q) => q.time <= left && q.cost <= money && (!s.persona || q.stam <= stam));
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of sessions) if (now - v.touched > TTL) sessions.delete(k);
+  for (const [k, v] of weeks) if (now - v.touched > 6 * TTL) weeks.delete(k);
+}, 10 * 60 * 1000).unref();
+
+app.get('/api/routes', (req, res) => {
+  res.json({
+    modes: E.cfg.modes, personas: E.cfg.personas,
+    levels: E.cfg.levels.map(({ id, title, text, persona, weather, tags, mods, event, errand }) => ({
+      id, title, text, persona, weather, tags, slack: mods.slack || null, subwayOff: !!mods.subwayOff,
+      event: event ? `${event.icon} ${event.title} 예고` : null, errand: errand ? `${errand.icon} ${errand.goal}` : null,
+    })),
+    scenarios: E.cfg.scenarios.map(({ id, title, text, tags }) => ({ id, title, text, tags })) });
+});
+
+// ── 일주일 등교 캠페인 ──  하루의 결과(저금·지각·친구 도움)가 다음 날로 이어진다.
+// 하루 결과는 "다음 날" 요청 때 확정한다 → 그 전까지는 같은 지도 재도전 가능.
+const weeks = new Map();
+const DAYS = E.cfg.week;
+
+function weekScenario(w, choice) {
+  const d = DAYS[w.day - 1];
+  const sc = { ...d, id: 'week' + d.day, startName: '집', destName: '광운대역', tags: [] };
+  if (w.lastLate) { sc.stamDelta = -15; sc.tags.push('😮‍💨 어제 뛰어서 체력 -15'); }
+  if (d.umbrella) {
+    if (choice === 'umbrella' && !w.umbrella && w.savings >= d.umbrella) { w.umbrella = true; w.savings -= d.umbrella; }
+    if (w.umbrella) { sc.event = null; sc.tags.push('☂ 우산 있음 (소나기 영향 없음)'); }
+  }
+  if (d.day === 4 && sc.event) {
+    if (w.helped) sc.tags.push('📱 민수의 제보로 지연 시각을 안다');
+    else sc.event = { ...sc.event, vague: true };
+  }
+  if (d.day === 5 && w.savings > 0) { sc.bonusMoney = w.savings; sc.tags.push(`🐷 저금 ₩${w.savings.toLocaleString('ko-KR')} 보탬`); }
+  return sc;
+}
+
+function weekView(w) {
+  const done = w.day > DAYS.length;
+  const v = { weekId: w.id, day: w.day, savings: w.savings, late: w.late, helped: w.helped, log: w.log, done, today: null, ending: null };
+  if (done) {
+    const on = DAYS.length - w.late;
+    v.ending = on === DAYS.length ? { title: '🏆 완벽한 일주일', text: '닷새 모두 제시간에 도착했다. 교수님도 얼굴을 기억하기 시작했다.' }
+      : on >= 3 ? { title: '🙂 무난한 일주일', text: `${on}일은 제시간에 도착했다. 다음 주엔 조금 더 일찍 나서 보자.` }
+        : { title: '😵 험난한 일주일', text: `지각 ${w.late}번… 주말에 푹 쉬고 다음 주에 다시 도전하자.` };
+    if (w.helped) v.ending.text += ' 민수와는 꽤 친해졌다.';
+    return v;
+  }
+  const d = DAYS[w.day - 1], notes = [];
+  if (w.lastLate) notes.push('😮‍💨 어제 지각해서 뛰었더니 피곤하다. (체력 -15)');
+  if (d.day === 4) notes.push(w.helped ? '📱 민수: "교재 고마웠어! 오늘 집회 때문에 버스 막히는 시각 알려줄게."' : '📻 오늘 집회로 버스가 막힌다는데, 정확한 시각은 알 수 없다.');
+  if (d.day === 5 && w.late >= 2) notes.push('😨 이번 주 지각이 벌써 여러 번… 오늘은 정말 늦으면 안 된다.');
+  if (d.day === 5 && w.savings > 0) notes.push(`🐷 모아 둔 저금 ₩${w.savings.toLocaleString('ko-KR')}을 오늘 교통비에 보탠다.`);
+  if (d.umbrella && w.umbrella) notes.push('☂ 우산을 챙겼다.');
+  v.today = {
+    day: d.day, name: d.name, title: d.title, text: d.text, notes,
+    errand: d.errand ? d.errand.ask : null, event: d.event && !(d.umbrella && w.umbrella) ? `${d.event.icon} ${d.event.title} 예고` : null,
+    choice: d.umbrella && !w.umbrella ? { id: 'umbrella', label: `☂ 우산 사기 (저금 ₩${d.umbrella.toLocaleString('ko-KR')})`, price: d.umbrella, ok: w.savings >= d.umbrella } : null,
+  };
+  return v;
+}
+
+app.post('/api/week/start', (req, res) => {
+  const w = { id: crypto.randomUUID(), day: 1, savings: 0, late: 0, helped: false, umbrella: false, lastLate: false, log: [], pending: null, touched: Date.now() };
+  weeks.set(w.id, w);
+  res.json(weekView(w));
+});
+
+// 오늘 결과를 확정하고 다음 날로
+app.post('/api/week/next', (req, res) => {
+  const w = weeks.get((req.body || {}).weekId);
+  if (!w) return res.status(404).json({ error: 'week_not_found' });
+  if (w.day > DAYS.length) return res.json(weekView(w));
+  if (!w.pending) return res.status(409).json({ error: 'day_not_finished' });
+  const d = DAYS[w.day - 1], p = w.pending, ok = p.status === 'success';
+  const saved = ok && d.day < DAYS.length ? Math.min(1500, Math.floor(p.left / 2 / 50) * 50) : 0;   // 남긴 교통비의 절반(최대 1,500원)을 저금
+  if (d.day === DAYS.length) w.savings = 0;   // 금요일엔 저금을 털어 썼다
+  w.savings += saved;
+  if (!ok) w.late += 1;
+  w.lastLate = !ok;
+  if (d.errand && ok && p.errandDone) w.helped = true;
+  w.log.push({ day: d.day, name: d.name, ok, saved, errand: d.errand ? !!(ok && p.errandDone) : null });
+  w.day += 1; w.pending = null; w.touched = Date.now();
+  res.json(weekView(w));
+});
+
+app.get('/api/history', (req, res) => {
+  const h = readHistory();
+  res.json({ plays: h.length, clears: h.filter((x) => x.status === 'success').length,
+    bestRound: h.reduce((m, x) => (x.mode === 'endless' && x.status === 'success' ? Math.max(m, x.round) : m), 0) });
+});
+
+app.post('/api/simulate/start', (req, res) => {
+  const { mode = 'endless', scenarioId, levelId } = req.body || {};
+  let round = Number(req.body && req.body.round) || 1;
+  if (!['endless', 'campaign', 'level', 'week'].includes(mode)) return res.status(400).json({ error: 'invalid_mode' });
+  if (!Number.isInteger(round) || round < 1 || round > 30) return res.status(400).json({ error: 'invalid_round' });
+  let scenario = null;
+  if (mode === 'campaign') {
+    scenario = E.cfg.scenarios.find((s) => s.id === scenarioId);
+    if (!scenario) return res.status(400).json({ error: 'invalid_scenario' });
+    round = 1;
+  }
+  if (mode === 'level') {
+    scenario = E.cfg.levels.find((l) => l.id === levelId);
+    if (!scenario) return res.status(400).json({ error: 'invalid_level' });
+    round = scenario.round;
+  }
+  let week = null;
+  if (mode === 'week') {
+    week = weeks.get((req.body || {}).weekId);
+    if (!week) return res.status(404).json({ error: 'week_not_found' });
+    if (week.day > E.cfg.week.length) return res.status(409).json({ error: 'week_over' });
+    week.touched = Date.now();
+    scenario = weekScenario(week, (req.body || {}).choice);
+    round = scenario.round;
+  }
+  const r = E.newRound({ round, scenario });
+  const init = {
+    mode, round, scenario, graph: r.graph, start: r.start, dest: r.dest, limit: r.limit, resources: r.resources, opt: r.opt,
+    levelId: mode === 'level' ? scenario.id : null, persona: r.persona, maxStamina: r.maxStamina,
+    goals: mode === 'level' ? E.levelGoals(r.opt, r.limit, r.resources, r.maxStamina, r.persona, r.errand) : null,
+    event: r.event, errand: r.errand, weekId: week ? week.id : null,
+  };
+  res.json(publicState(openSession(init)));
+});
+
+// 맵·출발/도착·자원·제한 시간 등 불변 조건(init)은 그대로, 이동 상태만 새로 시작
+function openSession(init) {
+  const s = {
+    ...init, init, id: crypto.randomUUID(), cur: init.start, used: 0, spent: 0, stamSpent: 0, rem: 0, path: [], errandDone: false,
+    status: 'active', touched: Date.now(),
+  };
+  sessions.set(s.id, s);
+  return s;
+}
+
+// 같은 지도 재도전: 끝난 라운드와 동일한 조건으로 새 세션을 연다
+app.post('/api/simulate/retry', (req, res) => {
+  const s = sessions.get((req.body || {}).sessionId);
+  if (!s) return res.status(404).json({ error: 'session_not_found' });
+  if (s.status === 'active') return res.status(409).json({ error: 'round_active' });
+  sessions.delete(s.id);
+  res.json(publicState(openSession(s.init)));
+});
+
+app.post('/api/simulate/step', (req, res) => {
+  const { sessionId, to, mode } = req.body || {};
+  const s = sessions.get(sessionId);
+  if (!s) return res.status(404).json({ error: 'session_not_found' });
+  if (s.status !== 'active') return res.status(409).json({ error: 'round_over' });
+  // 입력값 검증: 인접 노드 / 존재하는 수단 / 해당 구간에서 가능한 수단 / 자원 충분
+  if (!Number.isInteger(to) || !s.graph.nodes[to]) return res.status(400).json({ error: 'invalid_node' });
+  if (!E.MODE_IDS.includes(mode)) return res.status(400).json({ error: 'invalid_mode' });
+  const edge = s.graph.adj[s.cur].find((e) => E.other(e, s.cur) === to);
+  if (!edge) return res.status(400).json({ error: 'not_adjacent' });
+  const raw = edge.opts[mode], base = E.timeAt(raw, mode, s.used, s.event);
+  if (base == null) return res.status(400).json({ error: 'mode_unavailable' });
+  const q = E.quote(base, mode, s.rem);
+  const t = q.time, cost = q.cost;
+  if (cost > s.resources - s.spent) return res.status(400).json({ error: 'not_enough_money' });
+
+  const stam = s.persona ? E.staminaCost(mode, raw, s.persona) : 0;
+  if (stam > s.maxStamina - s.stamSpent) return res.status(400).json({ error: 'not_enough_stamina' });
+
+  s.touched = Date.now();
+  s.stamSpent += stam;
+  s.path.push({ from: s.cur, to, mode, time: t, cost, transfer: q.transfer, stamina: stam });
+  s.rem = E.nextRem(mode, t, s.rem);
+  s.cur = to; s.used += t; s.spent += cost;
+  if (s.errand && to === s.errand.node) s.errandDone = true;
+
+  let result = null;
+  if (s.used > s.limit) result = finish(s, 'fail', '제한 시간을 초과했어요.');
+  else if (s.cur === s.dest) result = finish(s, 'success', '목적지에 도착!');
+  else if (!canMove(s)) result = finish(s, 'fail', '더 이상 이동할 수 없어요. (시간/자원/체력 부족)');
+  res.json({ state: publicState(s), result });
+});
+
+app.post('/api/simulate/giveup', (req, res) => {
+  const s = sessions.get((req.body || {}).sessionId);
+  if (!s) return res.status(404).json({ error: 'session_not_found' });
+  if (s.status !== 'active') return res.status(409).json({ error: 'round_over' });
+  const result = finish(s, 'fail', '포기했어요.');
+  res.json({ state: publicState(s), result });
+});
+
+app.use((err, req, res, next) => { // eslint-disable-line
+  console.error(err);
+  res.status(500).json({ error: 'server_error' });
+});
+
+if (require.main === module) {
+  app.listen(PORT, () => console.log(`ROUTE planner: http://localhost:${PORT}`));
+}
+module.exports = app;
