@@ -40,7 +40,21 @@ npm test
 | 저장 | 브라우저 localStorage·sessionStorage, 서버 메모리, JSON 파일 |
 | 테스트 | LinkeDOM, Node.js assert |
 
-게임 규칙은 `routes.json`, 이동 판정과 API는 `server.js`, 맵 생성과 경로 탐색은 `lib/engine.js`에서 관리합니다. 별도 프런트엔드 빌드 과정은 없습니다.
+별도 프런트엔드 빌드 과정은 없습니다.
+
+## 파일 구조
+
+```text
+server.js              # API, 세션 관리, 이동·결과 판정
+lib/engine.js          # 지도 생성, 이동 규칙, 경로 탐색
+routes.json            # 교통수단, 레벨, 캠페인 설정
+public/                # 화면 HTML, CSS, 클라이언트 JavaScript
+tests/                 # 화면·API 연동 테스트
+docs/                  # 발표자 가이드, 기술·데이터 구조 설명
+package.json           # 실행 명령과 의존성 정의
+package-lock.json      # 설치 의존성 버전 고정
+data/                  # 실행 중 생성되는 결과 기록 (Git 제외)
+```
 
 ## 데이터와 진행 저장
 
