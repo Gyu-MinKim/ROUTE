@@ -338,7 +338,7 @@ function moveUnavailable(q) {
 function placeModes() {
   const modesEl = $('.modes'), modesSlot = $('#modes-slot');
   const open = !!S && S.status === 'active' && sel != null && !busy;
-  const pop = !mobile() && typeof map.getScreenCTM === 'function' && typeof map.createSVGPoint === 'function';
+  const pop = !mobile() && !wrap.classList.contains('kakao-active') && typeof map.getScreenCTM === 'function' && typeof map.createSVGPoint === 'function';
   const host = pop ? wrap : modesSlot;
   if (modesEl.parentElement !== host) host.appendChild(modesEl);
   modesEl.classList.toggle('pop', pop);
