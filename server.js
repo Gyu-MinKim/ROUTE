@@ -4,6 +4,14 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const E = require('./lib/engine');
+const K = require('./lib/kakaoTransit');
+
+// Node.js 20.12+ 환경에서는 프로젝트 루트의 .env를 자동으로 읽는다.
+// 구버전 Node.js/배포 환경에서는 KAKAO_REST_API_KEY 환경변수를 직접 설정하면 된다.
+if (typeof process.loadEnvFile === 'function') {
+  try { process.loadEnvFile(path.join(__dirname, '.env')); }
+  catch (e) { if (e.code !== 'ENOENT') throw e; }
+}
 
 const PORT = process.env.PORT || 3000;
 const HISTORY = path.join(__dirname, 'data', 'game_history.json');
@@ -13,6 +21,45 @@ const TTL = 60 * 60 * 1000;
 const app = express();
 app.use(express.json({ limit: '10kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ── 카카오 대중교통 경로 조회 (기존 게임 세션/엔진과 분리) ──
+const transitCache = new Map();
+const TRANSIT_CACHE_MS = 5 * 60 * 1000;
+const ALLOWED_STATIONS = new Set([...E.cfg.stations.map(K.stationName), '광운대역']);
+
+app.get('/api/kakao/status', (req, res) => {
+  res.json({ configured: !!process.env.KAKAO_REST_API_KEY });
+});
+
+// 예: GET /api/kakao/transit?start=서울역&end=광운대역
+app.get('/api/kakao/transit', async (req, res) => {
+  if (!process.env.KAKAO_REST_API_KEY) {
+    return res.status(503).json({ error: 'kakao_key_missing' });
+  }
+  let start, end;
+  try {
+    start = K.stationName(req.query.start);
+    end = K.stationName(req.query.end);
+  } catch {
+    return res.status(400).json({ error: 'invalid_station_name' });
+  }
+  if (!ALLOWED_STATIONS.has(start) || !ALLOWED_STATIONS.has(end) || start === end) {
+    return res.status(400).json({ error: 'invalid_route_stations' });
+  }
+  const key = `${start}:${end}`;
+  const saved = transitCache.get(key);
+  if (saved && Date.now() - saved.at < TRANSIT_CACHE_MS) return res.json(saved.data);
+  try {
+    const data = await K.getTransitRoutes(start, end, process.env.KAKAO_REST_API_KEY);
+    if (transitCache.size >= 32) transitCache.delete(transitCache.keys().next().value);
+    transitCache.set(key, { at: Date.now(), data });
+    res.json(data);
+  } catch (error) {
+    console.warn('Kakao transit lookup failed:', error.message);
+    const known = error instanceof K.KakaoTransitError;
+    res.status(known ? error.status : 502).json({ error: known ? error.message : 'kakao_request_failed' });
+  }
+});
 
 // ── 기록 파일: 없거나 깨져도 빈 기록으로 시작 (재시작/초기화 안전) ──
 function readHistory() {
@@ -63,7 +110,7 @@ function publicState(s) {
     event: eventView(s), errand: s.errand ? { ...s.errand, done: s.errandDone } : null,
     week: s.weekId ? { weekId: s.weekId, day: s.scenario.day, name: s.scenario.name } : null,
     stamina: s.persona ? { left: s.maxStamina - s.stamSpent, max: s.maxStamina } : null,
-    nodes: g.nodes.map(({ id, name, x, y }) => ({ id, name, x, y })),
+    nodes: g.nodes.map(({ id, name, stationName, x, y }) => ({ id, name,stationName, x, y })),
     edges: g.edges.map(({ id, a, b, opts }) => ({ id, a, b, opts })),
     start: s.start, dest: s.dest, cur: s.cur,
     limit: s.limit, used: s.used, resources: s.resources, resLeft: s.resources - s.spent,

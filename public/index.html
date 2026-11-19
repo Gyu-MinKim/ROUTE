@@ -84,7 +84,15 @@
   <div class="journey-strip"><span><span class="status-dot"></span> 현재 <b id="current-station">-</b></span><span class="journey-dest">목적지 <b id="destination-station">-</b></span><span class="turn-note">이동할 때만 시간이 흘러요</span></div>
   <main>
     <div class="map-wrap">
+      <!-- 기존 게임 지도 -->
       <svg id="map" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet" role="group" aria-label="이동 경로 지도"></svg>
+      <!-- 카카오맵 지도 -->
+      <div id="kakao-map" class="hidden"></div>
+      <!-- 지도 전환 버튼 (추가) -->
+      <div class="map-switch">
+      <button id="btn-game-map" type="button">게임 지도</button>
+      <button id="btn-kakao-map" type="button">실제 지도</button>
+      </div>
       <div id="event-banner" class="event-banner hidden" role="status"></div>
       <div class="map-key"><span class="key-current">● 현재 위치</span><span class="key-reachable">○ 이동 가능</span><span>⚑ 목적지</span></div>
       <div class="zoom-btns">
@@ -189,7 +197,15 @@
 </div>
 
 <div id="ui-notice" class="ui-notice hidden" role="status" aria-live="polite"></div>
+<!-- 카카오맵 JavaScript SDK -->
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=e391418a0c006300e0593a7360180734&autoload=false&libraries=services"></script>
+
+<!-- 기존 JavaScript -->
 <script src="game.js"></script>
 <script src="ui.js"></script>
+
+<!-- 카카오맵 연동 JavaScript -->
+<script src="kakaoMap.js"></script>
+</body>
 </body>
 </html>

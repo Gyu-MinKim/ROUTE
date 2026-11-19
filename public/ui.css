@@ -333,3 +333,84 @@ footer { grid-template-columns:minmax(0,1fr) auto; }
 .modes.pop .mode:not(:disabled):hover { border-color:var(--accent); background:var(--bg); }
 .mode:not(:disabled) { cursor:pointer; }
 .mode-tag { font-size:13px; paint-order:stroke; stroke:var(--map); stroke-width:4px; stroke-linejoin:round; }
+
+/* 카카오맵 표시 영역 */
+#kakao-map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* 지도 전환 버튼 */
+.map-switch {
+  position: absolute;
+  top: 60px;
+  left: 12px;
+  z-index: 7;
+  display: flex;
+  gap: 6px;
+}
+
+.map-switch button {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+/* 실제 지도 표시 시 게임 전용 조작 요소 숨기기 */
+.map-wrap.kakao-active {
+  cursor: auto;
+  touch-action: auto;
+}
+
+.map-wrap.kakao-active .map-key,
+.map-wrap.kakao-active .zoom-btns,
+.map-wrap.kakao-active .location-btns,
+.map-wrap.kakao-active .map-hint,
+.map-wrap.kakao-active .modes.pop {
+  display: none !important;
+}
+
+/* 카카오맵 경로 선택 버튼 */
+.kakao-route-options {
+  position: absolute;
+  left: 12px;
+  top: 108px;
+  z-index: 7;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.kakao-route-options button {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.kakao-route-options button.selected {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: bold;
+}
+
+/* 카카오맵의 게임 노드 이름 */
+.kakao-node-label {
+  padding: 4px 9px;
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
