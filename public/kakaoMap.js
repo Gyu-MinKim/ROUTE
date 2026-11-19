@@ -281,3 +281,137 @@ async function showGameNodes() {
     (missing ? ` · ${missing}개 위치 검색 실패` : '')
   );
 }
+
+
+/* ── 실제 대중교통 간선 검증 테스트 ── */
+window.testTransitEdge = async function (edgeId = 0) {
+  // 게임 상태 확인
+  if (!S || !Array.isArray(S.edges)) {
+    console.error('게임을 먼저 시작해 주세요.');
+    return null;
+  }
+
+  // 카카오맵 초기화 여부 확인
+  if (!kakaoMapInstance || kakaoMapEl.classList.contains('hidden')) {
+    console.error('먼저 실제 지도 버튼을 눌러 주세요.');
+    return null;
+  }
+
+  // 선택한 간선 탐색
+  const edge = S.edges.find((e) => e.id === edgeId);
+
+  if (!edge) {
+    console.error(`간선 ${edgeId}을 찾지 못했습니다.`);
+    return null;
+  }
+
+  const from = S.nodes[edge.a];
+  const to = S.nodes[edge.b];
+
+  const start = from.stationName;
+  const end = to.stationName;
+
+  if (!start || !end || start === end) {
+    console.error('유효한 출발역 또는 도착역 정보가 없습니다.');
+    return null;
+  }
+
+  console.log(`간선 ${edge.id}: ${start} → ${end}`);
+  console.log('기존 게임 가중치:', edge.opts);
+
+  try {
+    // 실제 대중교통 경로 조회
+    const params = new URLSearchParams({ start, end });
+    const response = await fetch(`/api/kakao/transit?${params}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || `HTTP ${response.status}`);
+    }
+
+    if (!Array.isArray(data.routes) || !data.routes.length) {
+      throw new Error('조회된 대중교통 경로가 없습니다.');
+    }
+
+    // 조회한 경로별 정보 출력
+    console.table(data.routes.map((route, index) => ({
+      경로: index + 1,
+      소요시간: `${route.totalMinutes}분`,
+      교통비: `${route.fare}원`,
+      환승횟수: route.transfers,
+      이동수단: [...new Set(
+        route.steps.map((step) => step.mode)
+      )].join(', ')
+    })));
+
+    // 가장 빠른 경로 선택
+    const fastest = data.routes.reduce((best, route) =>
+      route.totalMinutes < best.totalMinutes ? route : best
+    );
+
+    // 기존 테스트 경로 제거
+    routeLines.forEach((line) => line.setMap(null));
+    routeLines = [];
+
+    const bounds = new kakao.maps.LatLngBounds();
+
+    const colors = {
+      subway: '#3366CC',
+      bus: '#E66A4E',
+      walk: '#548C62'
+    };
+
+    // 실제 이동 경로 표시
+    fastest.steps.forEach((step) => {
+      if (!Array.isArray(step.points) || step.points.length < 2) {
+        return;
+      }
+
+      // API 좌표 [경도, 위도] → 카카오맵 LatLng(위도, 경도)
+      const path = step.points.map(([x, y]) => {
+        const point = new kakao.maps.LatLng(y, x);
+        bounds.extend(point);
+        return point;
+      });
+
+      const line = new kakao.maps.Polyline({
+        map: kakaoMapInstance,
+        path,
+        strokeWeight: 6,
+        strokeColor: colors[step.mode] || '#888888',
+        strokeOpacity: 0.9
+      });
+
+      routeLines.push(line);
+    });
+
+    // 출발지와 도착지 좌표 포함
+    bounds.extend(
+      new kakao.maps.LatLng(data.origin.y, data.origin.x)
+    );
+    bounds.extend(
+      new kakao.maps.LatLng(data.destination.y, data.destination.x)
+    );
+
+    kakaoMapInstance.relayout();
+    kakaoMapInstance.setBounds(bounds);
+
+    console.log('선택된 실제 경로:', fastest);
+    console.log(
+      `기존 가중치:`,
+      edge.opts,
+      `실제 예상 소요 시간: ${fastest.totalMinutes}분`
+    );
+
+    notify(
+      `${start} → ${end}: 실제 예상 ${fastest.totalMinutes}분`
+    );
+
+    return data;
+
+  } catch (error) {
+    console.error('실제 간선 검증 실패:', error);
+    notify('실제 대중교통 경로 조회에 실패했습니다.');
+    return null;
+  }
+};

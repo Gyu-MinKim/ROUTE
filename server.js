@@ -5,6 +5,7 @@ const path = require('path');
 const crypto = require('crypto');
 const E = require('./lib/engine');
 const K = require('./lib/kakaoTransit');
+const B = require('./lib/baseWeights');
 
 // Node.js 20.12+ 환경에서는 프로젝트 루트의 .env를 자동으로 읽는다.
 // 구버전 Node.js/배포 환경에서는 KAKAO_REST_API_KEY 환경변수를 직접 설정하면 된다.
@@ -24,7 +25,27 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ── 카카오 대중교통 경로 조회 (기존 게임 세션/엔진과 분리) ──
 const transitCache = new Map();
+const transitInFlight = new Map();
 const TRANSIT_CACHE_MS = 5 * 60 * 1000;
+
+// 일반 경로 조회와 간선 가중치 조회에서 같은 응답 캐시를 재사용한다.
+// 동시에 같은 역 쌍을 요청한 경우에도 카카오 API를 한 번만 호출한다.
+function getCachedTransit(start, end) {
+  const key = `${start}:${end}`;
+  const saved = transitCache.get(key);
+  if (saved && Date.now() - saved.at < TRANSIT_CACHE_MS) return Promise.resolve(saved.data);
+  if (transitInFlight.has(key)) return transitInFlight.get(key);
+
+  const task = K.getTransitRoutes(start, end, process.env.KAKAO_REST_API_KEY)
+    .then((data) => {
+      if (transitCache.size >= 64) transitCache.delete(transitCache.keys().next().value);
+      transitCache.set(key, { at: Date.now(), data });
+      return data;
+    })
+    .finally(() => transitInFlight.delete(key));
+  transitInFlight.set(key, task);
+  return task;
+}
 const ALLOWED_STATIONS = new Set([...E.cfg.stations.map(K.stationName), '광운대역']);
 
 app.get('/api/kakao/status', (req, res) => {
@@ -46,18 +67,90 @@ app.get('/api/kakao/transit', async (req, res) => {
   if (!ALLOWED_STATIONS.has(start) || !ALLOWED_STATIONS.has(end) || start === end) {
     return res.status(400).json({ error: 'invalid_route_stations' });
   }
-  const key = `${start}:${end}`;
-  const saved = transitCache.get(key);
-  if (saved && Date.now() - saved.at < TRANSIT_CACHE_MS) return res.json(saved.data);
   try {
-    const data = await K.getTransitRoutes(start, end, process.env.KAKAO_REST_API_KEY);
-    if (transitCache.size >= 32) transitCache.delete(transitCache.keys().next().value);
-    transitCache.set(key, { at: Date.now(), data });
+    const data = await getCachedTransit(start, end);
     res.json(data);
   } catch (error) {
     console.warn('Kakao transit lookup failed:', error.message);
     const known = error instanceof K.KakaoTransitError;
     res.status(known ? error.status : 502).json({ error: known ? error.message : 'kakao_request_failed' });
+  }
+});
+
+// ── 실제 간선별 기본 가중치 (서버 세션 캐시; 게임 판정과 분리) ──
+// 최초 조회 시 간선마다 1번 조회하고, 같은 라운드/재도전에서는 원본을 재사용한다.
+// 현재 단계에서는 a->b 방향만 조사한다. 실제 교통망은 방향별 시간이 다를 수 있다.
+async function loadEdgeWeight(s, edge) {
+  const cached = s.baseWeights[edge.id];
+  if (cached) return cached;
+  if (s.weightRequests.has(edge.id)) return s.weightRequests.get(edge.id);
+
+  const task = (async () => {
+    const fromNode = s.graph.nodes[edge.a], toNode = s.graph.nodes[edge.b];
+    const from = fromNode.stationName || fromNode.name;
+    const to = toNode.stationName || toNode.name;
+    let result;
+    try {
+      const start = K.stationName(from), end = K.stationName(to);
+      if (start === end) throw new K.KakaoTransitError('same_station', 400);
+      if (!ALLOWED_STATIONS.has(start) || !ALLOWED_STATIONS.has(end)) {
+        throw new K.KakaoTransitError('invalid_route_stations', 400);
+      }
+      const data = await getCachedTransit(start, end);
+      result = B.parseWeight(edge, s.graph.nodes, data);
+    } catch (error) {
+      const code = error instanceof K.KakaoTransitError ? error.message : 'kakao_request_failed';
+      console.warn(`Edge ${edge.id} weight lookup: ${code}`);
+      result = B.errorWeight(edge, s.graph.nodes, code);
+    }
+    // 오류도 라운드 안에서는 보존한다. 자동 재요청으로 API를 반복 호출하지 않는다.
+    s.baseWeights[edge.id] = result;
+    return result;
+  })().finally(() => s.weightRequests.delete(edge.id));
+
+  s.weightRequests.set(edge.id, task);
+  return task;
+}
+
+// 예: /api/kakao/weights?sessionId=UUID&edgeId=0 (1개만 테스트)
+//     /api/kakao/weights?sessionId=UUID          (전체 간선 조회, 동시 3건 제한)
+app.get('/api/kakao/weights', async (req, res) => {
+  if (!process.env.KAKAO_REST_API_KEY) return res.status(503).json({ error: 'kakao_key_missing' });
+  const s = sessions.get(req.query.sessionId);
+  if (!s) return res.status(404).json({ error: 'session_not_found' });
+  s.touched = Date.now();
+
+  let edges = s.graph.edges;
+  if (req.query.edgeId !== undefined) {
+    const input = String(req.query.edgeId);
+    if (!/^\d+$/.test(input)) return res.status(400).json({ error: 'invalid_edge_id' });
+    const edge = edges.find((e) => e.id === Number(input));
+    if (!edge) return res.status(404).json({ error: 'edge_not_found' });
+    edges = [edge];
+  }
+
+  const results = new Array(edges.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < edges.length) {
+      const index = next++;
+      results[index] = await loadEdgeWeight(s, edges[index]);
+    }
+  };
+
+  try {
+    await Promise.all(Array.from({ length: Math.min(3, edges.length) }, () => worker()));
+    res.json({
+      sessionId: s.id,
+      direction: 'a-to-b',
+      total: s.graph.edges.length,
+      loaded: s.baseWeights.filter(Boolean).length,
+      baseWeights: results,
+      appliedToGame: false,
+    });
+  } catch (error) {
+    console.error('baseWeights load failed:', error);
+    res.status(500).json({ error: 'weights_load_failed' });
   }
 });
 
@@ -110,7 +203,7 @@ function publicState(s) {
     event: eventView(s), errand: s.errand ? { ...s.errand, done: s.errandDone } : null,
     week: s.weekId ? { weekId: s.weekId, day: s.scenario.day, name: s.scenario.name } : null,
     stamina: s.persona ? { left: s.maxStamina - s.stamSpent, max: s.maxStamina } : null,
-    nodes: g.nodes.map(({ id, name, stationName, x, y }) => ({ id, name,stationName, x, y })),
+    nodes: g.nodes.map(({ id, name, stationName, x, y }) => ({ id, name, stationName, x, y })),
     edges: g.edges.map(({ id, a, b, opts }) => ({ id, a, b, opts })),
     start: s.start, dest: s.dest, cur: s.cur,
     limit: s.limit, used: s.used, resources: s.resources, resLeft: s.resources - s.spent,
@@ -285,9 +378,12 @@ app.post('/api/simulate/start', (req, res) => {
 
 // 맵·출발/도착·자원·제한 시간 등 불변 조건(init)은 그대로, 이동 상태만 새로 시작
 function openSession(init) {
+  // init은 동일 지도를 재도전할 때 공유되므로, 이미 조회한 가중치도 함께 유지된다.
+  if (!init.baseWeights) init.baseWeights = new Array(init.graph.edges.length).fill(null);
   const s = {
     ...init, init, id: crypto.randomUUID(), cur: init.start, used: 0, spent: 0, stamSpent: 0, rem: 0, path: [], errandDone: false,
     status: 'active', touched: Date.now(),
+    baseWeights: init.baseWeights, weightRequests: new Map(),
   };
   sessions.set(s.id, s);
   return s;
