@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const E = require('./lib/engine');
 const K = require('./lib/kakaoTransit');
 const B = require('./lib/baseWeights');
+const { network: subwayNetwork } = require('./lib/subwayNetwork');
 
 // Node.js 20.12+ 환경에서는 프로젝트 루트의 .env를 자동으로 읽는다.
 // 구버전 Node.js/배포 환경에서는 KAKAO_REST_API_KEY 환경변수를 직접 설정하면 된다.
@@ -46,7 +47,8 @@ function getCachedTransit(start, end) {
   transitInFlight.set(key, task);
   return task;
 }
-const ALLOWED_STATIONS = new Set([...E.cfg.stations.map(K.stationName), '광운대역']);
+const ALLOWED_STATIONS = new Set([...E.cfg.stations.map(K.stationName), '광운대역',
+  ...Object.values(subwayNetwork.stations).map(s => s.stationName)]);
 
 app.get('/api/kakao/status', (req, res) => {
   res.json({ configured: !!process.env.KAKAO_REST_API_KEY });
@@ -203,8 +205,9 @@ function publicState(s) {
     event: eventView(s), errand: s.errand ? { ...s.errand, done: s.errandDone } : null,
     week: s.weekId ? { weekId: s.weekId, day: s.scenario.day, name: s.scenario.name } : null,
     stamina: s.persona ? { left: s.maxStamina - s.stamSpent, max: s.maxStamina } : null,
-    nodes: g.nodes.map(({ id, name, stationName, x, y }) => ({ id, name, stationName, x, y })),
-    edges: g.edges.map(({ id, a, b, opts }) => ({ id, a, b, opts })),
+    nodes: g.nodes.map(({ id, name, stationName, stationId, x, y, lat, lng, lineIds, isTransfer, isTransferWithinNetwork }) =>
+      ({ id, name, stationName, stationId, x, y, lat, lng, lineIds, isTransfer, isTransferWithinNetwork })),
+    edges: g.edges.map(({ id, a, b, opts, lineId, weightSource }) => ({ id, a, b, opts, lineId, weightSource })),
     start: s.start, dest: s.dest, cur: s.cur,
     limit: s.limit, used: s.used, resources: s.resources, resLeft: s.resources - s.spent,
     path: s.path, status: s.status, rem: s.rem, quotes: quotesFor(s), transfer: E.cfg.transfer,
