@@ -51,9 +51,10 @@ function verify(g,p){
   }
   assert.equal(seen.size,n);
 }
-test('all nine physical lines produce only source-adjacent segments',()=>{
-  assert.deepEqual(CHECKED_LINES,['1','2','3','4','5','6','7','8','9']);
-  assert.equal(stationConnections().length,321);
+test('1–9 and K physical lines produce only source-adjacent segments',()=>{
+  assert.deepEqual(CHECKED_LINES,['1','2','3','4','5','6','7','8','9','K']);
+  assert.equal(stationConnections().length,344);
+  assert.equal(stationConnections().filter(e=>e.lineId!=='K').length,321);
   for(const e of stationConnections())assert.ok(getNeighbors(e.from).some(n=>n.stationId===e.to&&n.lineId===e.lineId));
 });
 test('hundreds of seeded-like randomized levels stay connected and preserve two valid paths',()=>{
@@ -92,4 +93,16 @@ test('engine session generation works with new topology and legacy cost solver',
     if(prev===undefined)delete process.env.ROUTE_GRAPH_MODE;
     else process.env.ROUTE_GRAPH_MODE=prev;
   }
+});
+
+
+test('the Gyeongui–Jungang extension can participate in generated gameplay paths',()=>{
+  let hasK=false;
+  let seed=1234567;
+  const seededRandom=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);
+  for(let round=2;round<=14&&!hasK;round++)for(let k=0;k<30&&!hasK;k++){
+    const g=buildSubwayGraph(roundParams(round),{},virtual,seededRandom);
+    if(g.edges.some(e=>e.lineId==='K'))hasK=true;
+  }
+  assert.ok(hasK,'New K line never selected in sample games');
 });
