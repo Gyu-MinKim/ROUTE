@@ -21,14 +21,20 @@ npm test
 
 ## 실제 지도 모드
 
-Git Bash에서 다음 명령으로 등교 구간 JSON을 준비하고 서버를 실행합니다.
+기본 게임은 저장소 파일만으로 실행할 수 있습니다. 실제 지도 모드는 코드와 구간 데이터를 별도로 배포합니다. 저장소에는 공개 지하철 자료가 포함됩니다. 버스·도보까지 포함한 전체 카탈로그는 해당 환경에서 재사용이 허용된 파일을 사용합니다.
+
+**새 PC와 배포 서버 설치 절차**
+
+1. 데이터 담당자가 배포가 허용된 완성본 `commuteSegments.json`을 팀의 접근 제한 저장소에 버전별로 보관하고, 다운로드 위치와 SHA-256을 배포 담당자에게 전달합니다. 현재 로컬 관측 자료의 재배포 권한과 팀 다운로드 주소는 확정되지 않았습니다.
+2. 팀원은 전달받은 파일을 프로젝트의 `data/commuteSegments.json`에 복사합니다. 배포 서버에서는 읽기 전용으로 마운트하고 `ROUTE_SEGMENTS_FILE`에 절대경로를 지정할 수 있습니다. 완성본을 설치한 뒤 생성기를 다시 실행하면 파일이 교체됩니다.
+3. 프로젝트 루트에서 아래 명령을 실행합니다(Git Bash). 데이터 검사에 성공하면 실제 지도 모드를 시작합니다.
 
 ```sh
-node tools/buildCommuteCatalog.cjs
-ROUTE_GRAPH_MODE=subway npm start
+npm ci
+npm run data:check && ROUTE_GRAPH_MODE=subway npm start
 ```
 
-서버는 `data/commuteSegments.json`의 방향별 구간만 사용합니다. 외부 길찾기와 역 검색 없이 저장 좌표로 지도 마커와 연결선을 그립니다. 지도 배경은 카카오맵 SDK를 사용합니다.
+배포 파일 대신 사용 가능한 로컬 원본 `data/verifiedSegments.json`이 있으면 `node tools/buildCommuteCatalog.cjs`로 완성본을 만들고 같은 검사를 실행합니다. 서버는 방향별 구간과 저장 좌표를 읽고 카카오맵 SDK로 마커와 연결선을 그립니다.
 
 목표 시간대는 한국시간 공휴일 제외 평일 08:00~09:00 정상 운행입니다. 서울교통공사 지하철 값은 출근 시간대 실측이 아닌 표준 운행시간입니다. 로컬 버스·도보 기록에는 조회 시각만 있어 목표 시간대와 지연 여부가 확인되지 않았습니다. JSON의 `timeBasis`가 근거를 구분하고 `verifiedForWeekdayMorning`이 해당 시간대 검증 여부를 표시합니다. 게임 이벤트 보정은 플레이 중 별도로 적용합니다.
 

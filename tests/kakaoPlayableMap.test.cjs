@@ -26,7 +26,7 @@ function element() {
   };
 }
 function setup() {
-  const fakeGameMap = element();
+  const fakeGameMap = element(), mapSwitch = element();
   const fakeKakaoEl = element(); fakeKakaoEl.classList.add('hidden');
   const fakeWrap = element(); const gameButton = element(), kakaoButton = element();
   const nodes = [
@@ -34,7 +34,7 @@ function setup() {
     { id: 1, name: '미아역', stationName: '미아역', lat: 37.62, lng: 127.02 },
     { id: 2, name: '신이문역', stationName: '신이문역', lat: 37.63, lng: 127.05 },
   ];
-  const state = { sessionId: 'abc', nodes, edges: [{ id: 0, a: 0, b: 1 }],
+  const state = { sessionId: 'abc', realMapEnabled: true, nodes, edges: [{ id: 0, a: 0, b: 1 }],
     cur: 0, start: 0, dest: 2, status: 'active', path: [] };
   const clicks = [];
   fakeGameMap.querySelector = (query) => {
@@ -63,7 +63,7 @@ function setup() {
   const document = {
     getElementById(id) { return ({'map':fakeGameMap, 'kakao-map':fakeKakaoEl,
       'btn-game-map':gameButton,'btn-kakao-map':kakaoButton})[id]; },
-    querySelector(selector) { return selector === '.map-wrap' ? fakeWrap : null; },
+    querySelector(selector) { return selector === '.map-wrap' ? fakeWrap : selector === '.map-switch' ? mapSwitch : null; },
     createElement() { return element(); },
     addEventListener(type, cb) { listeners[type] = cb; },
   };
@@ -78,7 +78,7 @@ function setup() {
     URLSearchParams,
   });
   vm.runInContext(source, context);
-  return { context, clicks, status, listeners, fakeKakaoEl, state };
+  return { context, clicks, status, listeners, fakeKakaoEl, state, mapSwitch };
 }
 
 test('인접 노드 선택은 기존 게임 SVG 클릭으로 전달된다', () => {
@@ -107,4 +107,16 @@ test('실제 지도에서 게임 노드와 간선을 시각화하고 다시 SVG�
   vm.runInContext('showGameMap()', x.context);
   assert.equal(x.fakeKakaoEl.classList.contains('hidden'), true);
   assert.equal(x.status.updateCount, 2);
+});
+
+test('기본 모드는 지도 전환을 숨기고 실제 지도 요청을 무시한다', async () => {
+  const x = setup();
+  x.state.realMapEnabled = false;
+  x.listeners['route:ui']();
+  assert.ok(x.mapSwitch.classList.contains('hidden'));
+  await vm.runInContext('showKakaoMap()', x.context);
+  assert.equal(x.status.markers.length, 0);
+  x.state.realMapEnabled = true;
+  x.listeners['route:ui']();
+  assert.equal(x.mapSwitch.classList.contains('hidden'), false);
 });

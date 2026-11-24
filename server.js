@@ -97,6 +97,7 @@ function publicState(s) {
       id: s.scenario.id, title: s.scenario.title, text: s.scenario.text, tags: s.scenario.tags,
     },
     levelId: s.levelId || null, goals: s.goals || null,
+    realMapEnabled: Boolean(g.verifiedWeights && g.nodes.every(node => node.stationId)),
     usesSegmentTimes: g.graphSource === 'verified-segments',
     subwayPreview: g.graphSource === 'verified-subway-topology' && !g.verifiedWeights,
     event: eventView(s), errand: s.errand ? { ...s.errand, done: s.errandDone } : null,

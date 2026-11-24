@@ -9,10 +9,6 @@ const gameMapBtn = document.getElementById('btn-game-map');
 const kakaoMapBtn = document.getElementById('btn-kakao-map');
 
 let kakaoMapInstance = null;
-let transitData = null;
-let routeLines = [];     // 대중교통 API 경로 확인용
-let routeMarkers = [];
-
 const nodeMarkers = [];
 const nodeLabels = [];
 const graphEdgeLines = []; // 게임 간선 (실제 선로가 아닌 게임 연결 관계)
@@ -21,9 +17,7 @@ let stationRequest = 0;
 let mapRequest = 0;
 let renderedSessionId = null;
 
-const routeOptions = document.createElement('div');
-routeOptions.className = 'kakao-route-options hidden';
-mapWrapEl.appendChild(routeOptions);
+const mapSwitch = document.querySelector('.map-switch');
 
 // 기존 SVG 지도 드래그/휠 이벤트가 카카오맵 조작과 충돌하지 않도록 한다.
 ['wheel', 'pointerdown', 'dblclick'].forEach((type) => {
@@ -40,7 +34,6 @@ function showGameMap() {
   ++stationRequest; // 닫은 뒤 도착하는 장소 검색 결과 무시
   kakaoMapEl.classList.add('hidden');
   gameMapEl.classList.remove('hidden');
-  routeOptions.classList.add('hidden');
   mapWrapEl.classList.remove('kakao-active');
   if (S) updateFooter(); // 이동수단 카드를 원래 SVG 지도 위치로 복귀
 }
@@ -55,6 +48,7 @@ kakaoMapBtn.addEventListener('click', () => {
 });
 
 async function showKakaoMap() {
+  if (!S?.realMapEnabled) return;
   const request = ++mapRequest;
   gameMapEl.classList.add('hidden');
   kakaoMapEl.classList.remove('hidden');
@@ -79,57 +73,6 @@ async function showKakaoMap() {
   }
 }
 
-// 기존 카카오 경로 조회 기능은 수동 테스트용으로 유지한다.
-function showRouteOptions() {
-  if (!transitData?.routes) return;
-  routeOptions.replaceChildren();
-  transitData.routes.forEach((route, index) => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.textContent = `경로 ${index + 1} · ${route.totalMinutes}분`;
-    button.addEventListener('click', () => drawRoute(index));
-    routeOptions.appendChild(button);
-  });
-  routeOptions.classList.remove('hidden');
-}
-
-function drawRoute(index) {
-  if (!transitData?.routes?.[index] || !kakaoMapInstance) return;
-  const route = transitData.routes[index];
-  clearMapObjects(routeLines);
-  clearMapObjects(routeMarkers);
-  const bounds = new kakao.maps.LatLngBounds();
-  const colors = { subway: '#3366CC', bus: '#E66A4E', walk: '#548C62' };
-
-  route.steps.forEach((step) => {
-    if (!Array.isArray(step.points) || step.points.length < 2) return;
-    const path = step.points.map(([x, y]) => {
-      const point = new kakao.maps.LatLng(y, x);
-      bounds.extend(point);
-      return point;
-    });
-    const line = new kakao.maps.Polyline({
-      path, strokeWeight: 6, strokeColor: colors[step.mode] || '#888888',
-      strokeOpacity: 0.9,
-    });
-    line.setMap(kakaoMapInstance);
-    routeLines.push(line);
-  });
-
-  [transitData.origin, transitData.destination].forEach((place) => {
-    const position = new kakao.maps.LatLng(place.y, place.x);
-    bounds.extend(position);
-    const marker = new kakao.maps.Marker({ position, title: place.name });
-    marker.setMap(kakaoMapInstance);
-    routeMarkers.push(marker);
-  });
-  kakaoMapInstance.relayout();
-  kakaoMapInstance.setBounds(bounds);
-  [...routeOptions.children].forEach((button, i) => {
-    button.classList.toggle('selected', i === index);
-  });
-}
-
 async function showGameNodes() {
   const request = ++stationRequest;
   if (!S || !Array.isArray(S.nodes)) {
@@ -138,13 +81,10 @@ async function showGameNodes() {
   }
   const sessionId = S.sessionId;
   renderedSessionId = sessionId;
-  clearMapObjects(routeLines);
-  clearMapObjects(routeMarkers);
   clearMapObjects(nodeMarkers);
   clearMapObjects(nodeLabels);
   clearMapObjects(graphEdgeLines);
   nodePositions.clear();
-  routeOptions.classList.add('hidden');
 
   const results = S.nodes.map(node => ({
     node,
@@ -290,6 +230,11 @@ function syncKakaoGameState() {
 // game.js의 updateFooter()가 호출될 때마다 상태를 다시 그린다.
 // 이동 성공, 재시도, 역 선택 후에도 원본 game.js 게임 규칙이 우선한다.
 document.addEventListener('route:ui', () => {
+  mapSwitch.classList.toggle('hidden', !S?.realMapEnabled);
+  if (!S?.realMapEnabled) {
+    if (!kakaoMapEl.classList.contains('hidden')) showGameMap();
+    return;
+  }
   if (!kakaoMapInstance || kakaoMapEl.classList.contains('hidden') || !S) return;
   if (renderedSessionId !== S.sessionId) {
     showGameNodes().catch((error) => console.error('카카오맵 노드 갱신 실패:', error));
@@ -297,28 +242,3 @@ document.addEventListener('route:ui', () => {
     syncKakaoGameState();
   }
 });
-
-/* ── 기존 실제 대중교통 간선 조회 수동 테스트 유지 ── */
-window.testTransitEdge = async function (edgeId = 0) {
-  if (!S || !Array.isArray(S.edges)) {
-    console.error('게임을 먼저 시작해 주세요.');
-    return null;
-  }
-  if (!kakaoMapInstance || kakaoMapEl.classList.contains('hidden')) {
-    console.error('먼저 실제 지도 버튼을 눌러 주세요.');
-    return null;
-  }
-  const edge = S.edges.find((item) => item.id === edgeId);
-  if (!edge) {
-    console.error(`간선 ${edgeId}을 찾지 못했습니다.`);
-    return null;
-  }
-  const from = S.nodes[edge.a], to = S.nodes[edge.b];
-  const start = from.stationName, end = to.stationName;
-  if (!start || !end || start === end) {
-    console.error('유효한 출발역 또는 도착역 정보가 없습니다.');
-    return null;
-  }
-  console.log(`간선 ${edge.id}: ${start} → ${end}`, edge.directionalOpts || edge.opts);
-  return edge.directionalOpts || edge.opts;
-};

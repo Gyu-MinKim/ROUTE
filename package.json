@@ -8,7 +8,8 @@
   },
   "scripts": {
     "start": "node server.js",
-    "test": "node tests/ui-usability.cjs"
+    "test": "node tests/ui-usability.cjs && node --test tests/*.test.cjs",
+    "data:check": "node tools/checkCommuteCatalog.cjs"
   },
   "keywords": [],
   "author": "",

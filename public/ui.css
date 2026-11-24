@@ -374,32 +374,6 @@ footer { grid-template-columns:minmax(0,1fr) auto; }
   display: none !important;
 }
 
-/* 카카오맵 경로 선택 버튼 */
-.kakao-route-options {
-  position: absolute;
-  left: 12px;
-  top: 108px;
-  z-index: 7;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.kakao-route-options button {
-  padding: 8px 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel);
-  color: var(--ink);
-  font-size: 12px;
-}
-
-.kakao-route-options button.selected {
-  border-color: var(--accent);
-  color: var(--accent);
-  font-weight: bold;
-}
-
 /* 카카오맵의 게임 노드 이름 */
 .kakao-node-label {
   padding: 4px 9px;
