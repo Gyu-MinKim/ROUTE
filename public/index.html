@@ -155,8 +155,10 @@
     <div class="info">
       <div id="info-xfer" class="xfer"></div>
     </div>
-    <p id="move-warning" class="move-warning hidden" role="status"></p>
-    <button class="btn giveup" id="btn-giveup">포기</button>
+    <div class="round-options">
+      <p id="move-warning" class="move-warning hidden" role="status"></p>
+      <button class="btn giveup" id="btn-giveup">라운드 포기</button>
+    </div>
   </footer>
 
   <!-- 지하철 노선도 -->
@@ -198,7 +200,7 @@
 
 <div id="ui-notice" class="ui-notice hidden" role="status" aria-live="polite"></div>
 <!-- 카카오맵 JavaScript SDK -->
-<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=e391418a0c006300e0593a7360180734&autoload=false&libraries=services"></script>
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=e391418a0c006300e0593a7360180734&autoload=false"></script>
 
 <!-- 기존 JavaScript -->
 <script src="game.js"></script>

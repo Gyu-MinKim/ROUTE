@@ -30,9 +30,9 @@ function setup() {
   const fakeKakaoEl = element(); fakeKakaoEl.classList.add('hidden');
   const fakeWrap = element(); const gameButton = element(), kakaoButton = element();
   const nodes = [
-    { id: 0, name: '쌍문역', stationName: '쌍문역' },
-    { id: 1, name: '미아역', stationName: '미아역' },
-    { id: 2, name: '신이문역', stationName: '신이문역' },
+    { id: 0, name: '쌍문역', stationName: '쌍문역', lat: 37.61, lng: 127.01 },
+    { id: 1, name: '미아역', stationName: '미아역', lat: 37.62, lng: 127.02 },
+    { id: 2, name: '신이문역', stationName: '신이문역', lat: 37.63, lng: 127.05 },
   ];
   const state = { sessionId: 'abc', nodes, edges: [{ id: 0, a: 0, b: 1 }],
     cur: 0, start: 0, dest: 2, status: 'active', path: [] };
@@ -60,16 +60,6 @@ function setup() {
   }
   class BoundsStub { extend() {} }
   class LatLngStub { constructor(lat, lng) { this.lat = lat; this.lng = lng; } }
-  class PlacesStub {
-    keywordSearch(query, cb) {
-      const places = {
-        '쌍문역': { x: '127.01', y: '37.61' },
-        '미아역': { x: '127.02', y: '37.62' },
-        '신이문역': { x: '127.05', y: '37.63' },
-      };
-      cb([{ ...places[query], place_name: query, category_group_code: 'SW8' }], 'OK');
-    }
-  }
   const document = {
     getElementById(id) { return ({'map':fakeGameMap, 'kakao-map':fakeKakaoEl,
       'btn-game-map':gameButton,'btn-kakao-map':kakaoButton})[id]; },
@@ -79,8 +69,7 @@ function setup() {
   };
   const kakao = { maps: { load(cb) { cb(); }, Map: MapStub, Marker: MarkerStub,
     CustomOverlay: OverlayStub, Polyline: LineStub, LatLngBounds: BoundsStub,
-    LatLng: LatLngStub, event: { addListener() {} },
-    services: { Status: { OK: 'OK' }, Places: PlacesStub } } };
+    LatLng: LatLngStub, event: { addListener() {} } } };
   const context = vm.createContext({ document, window: {kakao}, kakao,
     S:state, busy:false, sel:null, updateFooter() { status.updateCount++; },
     notify(msg) { status.notifications.push(msg); },

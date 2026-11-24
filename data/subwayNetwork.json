@@ -1,0 +1,7105 @@
+{
+  "schemaVersion": 2,
+  "metadata": {
+    "name": "ROUTE 서울권 1~9호선 + 경의중앙선 + 수인분당선 + 신분당선",
+    "scope": "1~9호선 서울권 중심 구간, 경의중앙선 서울권 일부, 수인분당선 청량리~인천 및 신분당선 신사~광교 전체. 전 수도권 모든 노선을 포함하지 않음.",
+    "createdAt": "2026-11-24",
+    "idConvention": "ROUTE 내부 ID (일부는 기존 Step3 ID 재사용); station source code는 별도 sourceCodes에 기록, 공식 코드라고 보장하지 않음",
+    "coordinates": "Existing Step5 station coordinates untouched; B new station WGS84 from 2026 public CSV; S new stations WGS84 from 2026-04-29 public station list.",
+    "transferFlag": "isTransferWithinNetwork includes all loaded 1~9, K, B, S lines; knownOtherTransferLines records unavailable external lines.",
+    "incompleteExternalLines": true,
+    "networkAdjacency": "stationIds의 연속 쌍, closed, branches의 연속 쌍만 존재. 근거 없는 바로가기 없음",
+    "virtualWeightWarning": "운행 시간, 배차, 철도 구간별 시간, 환승 시간, 요금 미검증. 게임에서 virtual weight만 사용",
+    "operationalCaution": "1호선 운행 계통, 6호선 응암 순환의 일방통행, 9호선 급행 운행 및 지선 배차 미반영. 물리 선로 인접관계에 국한",
+    "sourceUrls": {
+      "stationTable": "https://github.com/gshark1348/railtype_korea/tree/main/data",
+      "externalTransferCrossCheck": "https://github.com/myyrakle/datasets/blob/master/stations-kr/20260429/subway_stations.csv",
+      "stationTableInfo": "https://github.com/gshark1348/railtype_korea/blob/main/data/GIS-SOURCES.md",
+      "seoulMetroStationMaster": "https://data.seoul.go.kr/dataList/OA-21232/A/1/datasetView.do",
+      "seoulMetroLineStations": "https://data.seoul.go.kr/dataList/OA-15442/S/1/datasetView.do",
+      "seoulMetroBranchCrossCheck": "https://www.data.go.kr/data/15044439/fileData.do",
+      "priorStep3": "ROUTE_SubwayGraph_Expansion_Step3/data/subwayNetwork.json",
+      "subwayAdjacencyHistorical": "https://github.com/ledyx/KoreaMetroData/blob/master/src/main/resources/seoul/edges.json",
+      "gyeonguiJungangStationData": "https://github.com/myyrakle/datasets/blob/master/stations-kr/20260429/subway_stations.csv",
+      "gyeonguiJungangAdjacentPairs": "https://github.com/ledyx/KoreaMetroData/blob/master/src/main/resources/seoul/edges.json",
+      "gyeonguiJungangBranch": "https://www.ktdb.go.kr/DATA/pblcte/20260512020132299.pdf",
+      "gyeonguiJungangSeparateSinchon": "https://en.wikipedia.org/wiki/Sinchon_station_(Gyeongui_Line)",
+      "suinBundangOrderAndCoordinates": "https://github.com/gshark1348/railtype_korea/blob/main/data/suin-bundang-stations.csv",
+      "shinBundangOrder": "https://www.shinbundang.co.kr/dxline/dxline4_1.jsp",
+      "shinBundangCoordinates": "https://github.com/myyrakle/datasets/blob/master/stations-kr/20260429/subway_stations.csv",
+      "new2026PublicStationName": "https://www.data.go.kr/data/15041284/fileData.do",
+      "historicalAdjacencyCrossCheck": "https://github.com/ledyx/KoreaMetroData/blob/master/src/main/resources/seoul/edges.json"
+    },
+    "kLineId": "K = 경의중앙선(ROUTE 내부 호선 ID)",
+    "kDataCautions": "경의선 신촌역은 2호선 신촌역과 다른 역이며 물리적 환승으로 자동 연결하지 않음. 기존 환승역 대표 좌표는 Step4에서 유지. 운행 계통/배차/실제 시간/요금/방향성은 아직 적용하지 않음.",
+    "bundangExpansionAt": "2026-11-24",
+    "shinbundangGameplayRule": "현재 engine roundParams 기준 라운드 4부터 이용 가능 (target game node count >= 20). 1~3라운드 경로 탐색에서 S 제외.",
+    "premiumFareWarning": "S 신분당선 별도운임은 필수이나 미계산. 이 릴리스의 게임 경로 비용/최적해는 실제 요금과 다를 수 있음.",
+    "suinServiceWarning": "B 청량리~왕십리 구간 및 장거리 운행 계통·급행 정차·실제 출발시각은 검증/적용하지 않음.",
+    "externalSourceLineDifference": "2026 공개 수인분당선 CSV의 신길온천 표기를 2026 공공 철도데이터의 능길로 정규화하고 신길온천은 alias에 남김."
+  },
+  "lines": {
+    "1": {
+      "name": "1호선",
+      "stationIds": [
+        "s1_113",
+        "s1_114",
+        "s1_115",
+        "changdong",
+        "nokcheon",
+        "wolgye",
+        "gwangundae",
+        "seokgye",
+        "sinimun",
+        "oedaeap",
+        "hoegi",
+        "cheongnyangni",
+        "jegidong",
+        "sinseoldong",
+        "dongmyoap",
+        "dongdaemun",
+        "s1_129",
+        "s1_130",
+        "s1_131",
+        "s1_132",
+        "s1_133",
+        "s1_134",
+        "s1_135",
+        "s1_136",
+        "s1_137",
+        "s1_138",
+        "s1_139",
+        "s1_140",
+        "s1_141",
+        "s1_142",
+        "s1_143",
+        "s1_144",
+        "s1_145"
+      ],
+      "branches": [
+        {
+          "name": "금천구청 방면",
+          "stationIds": [
+            "s1_141",
+            "s1_P142",
+            "s1_P143",
+            "s1_P144"
+          ]
+        }
+      ]
+    },
+    "2": {
+      "name": "2호선",
+      "stationIds": [
+        "s1_132",
+        "s2_loop_202",
+        "s2_loop_203",
+        "s2_loop_204",
+        "s2_loop_205",
+        "s2_loop_206",
+        "s2_loop_207",
+        "s2_loop_208",
+        "s2_loop_209",
+        "s2_loop_210",
+        "s2_loop_211",
+        "s2_loop_212",
+        "s2_loop_213",
+        "s2_loop_214",
+        "s2_loop_215",
+        "s2_loop_216",
+        "s2_loop_217",
+        "s2_loop_218",
+        "s2_loop_219",
+        "s2_loop_220",
+        "s2_loop_221",
+        "s2_loop_222",
+        "s2_loop_223",
+        "s2_loop_224",
+        "s2_loop_225",
+        "s2_loop_226",
+        "s2_loop_227",
+        "s2_loop_228",
+        "s2_loop_229",
+        "s2_loop_230",
+        "s2_loop_231",
+        "s2_loop_232",
+        "s2_loop_233",
+        "s1_140",
+        "s2_loop_235",
+        "s2_loop_236",
+        "s2_loop_237",
+        "s2_loop_238",
+        "s2_loop_239",
+        "s2_loop_240",
+        "s2_loop_241",
+        "s2_loop_242",
+        "s2_loop_243"
+      ],
+      "closed": true,
+      "branches": [
+        {
+          "name": "성수지선",
+          "stationIds": [
+            "s2_loop_211",
+            "s2_seongsu_211_1",
+            "s2_seongsu_211_2",
+            "s2_seongsu_211_3",
+            "sinseoldong"
+          ]
+        },
+        {
+          "name": "신정지선",
+          "stationIds": [
+            "s1_140",
+            "s2_sinjeong_234_1",
+            "s2_sinjeong_234_2",
+            "s2_sinjeong_234_3",
+            "s2_sinjeong_234_4"
+          ]
+        }
+      ]
+    },
+    "3": {
+      "name": "3호선",
+      "stationIds": [
+        "s3_320",
+        "s3_321",
+        "s3_322",
+        "s3_323",
+        "s3_324",
+        "s3_325",
+        "s3_326",
+        "s3_327",
+        "s3_328",
+        "s1_130",
+        "s2_loop_203",
+        "s3_331",
+        "s3_332",
+        "s3_333",
+        "s3_334",
+        "s3_335",
+        "s3_336",
+        "s3_337",
+        "s3_338",
+        "s3_339",
+        "s2_loop_223",
+        "s3_341",
+        "s3_342",
+        "s3_343",
+        "s3_344",
+        "s3_345",
+        "s3_346",
+        "s3_347",
+        "s3_348",
+        "s3_349",
+        "s3_350",
+        "s3_351",
+        "s3_352"
+      ]
+    },
+    "4": {
+      "name": "4호선",
+      "stationIds": [
+        "s4_409",
+        "s4_410",
+        "nowon",
+        "changdong",
+        "ssangmun",
+        "suyu",
+        "mia",
+        "miasageori",
+        "gireum",
+        "seongshin-yeodaeipgu",
+        "hanseongdaeipgu",
+        "hyehwa",
+        "dongdaemun",
+        "s2_loop_205",
+        "s3_331",
+        "s4_424",
+        "s4_425",
+        "s1_133",
+        "s4_427",
+        "s4_428",
+        "s4_429",
+        "s4_430",
+        "s4_431",
+        "s4_432",
+        "s2_loop_226",
+        "s4_434"
+      ]
+    },
+    "5": {
+      "name": "5호선",
+      "stationIds": [
+        "s5_510",
+        "s5_511",
+        "s5_512",
+        "s5_513",
+        "s5_514",
+        "s5_515",
+        "s5_516",
+        "s5_517",
+        "s2_sinjeong_234_4",
+        "s5_519",
+        "s5_520",
+        "s5_521",
+        "s5_522",
+        "s2_loop_236",
+        "s5_524",
+        "s1_138",
+        "s5_526",
+        "s5_527",
+        "s5_528",
+        "s5_529",
+        "s5_530",
+        "s2_loop_243",
+        "s5_532",
+        "s5_533",
+        "s1_130",
+        "s2_loop_204",
+        "s2_loop_205",
+        "s5_537",
+        "s5_538",
+        "s5_539",
+        "s2_loop_208",
+        "s5_541",
+        "s5_542",
+        "s5_543",
+        "s5_544",
+        "s5_545",
+        "s5_546",
+        "s5_547",
+        "s5_548",
+        "s5_549",
+        "s5_550",
+        "s5_551",
+        "s5_552",
+        "s5_553",
+        "s5_554"
+      ],
+      "branches": [
+        {
+          "name": "마천 방면",
+          "stationIds": [
+            "s5_548",
+            "s5_P549",
+            "s5_P550",
+            "s5_P551",
+            "s3_352",
+            "s5_P553",
+            "s5_P554",
+            "s5_P555"
+          ]
+        }
+      ]
+    },
+    "6": {
+      "name": "6호선",
+      "stationIds": [
+        "s6_610",
+        "s6_616",
+        "s6_617",
+        "s6_618",
+        "s6_619",
+        "s6_620",
+        "s6_621",
+        "s2_loop_238",
+        "s6_623",
+        "s6_624",
+        "s6_625",
+        "s5_529",
+        "s6_627",
+        "s4_428",
+        "s6_629",
+        "s6_630",
+        "s6_631",
+        "s6_632",
+        "s3_333",
+        "s5_537",
+        "s2_loop_206",
+        "dongmyoap",
+        "changsin",
+        "bomun",
+        "anam",
+        "goryeodae",
+        "wolgok",
+        "sangwolgok",
+        "dolgoti",
+        "seokgye",
+        "taereungipgu",
+        "hwarangdae",
+        "bonghwasan",
+        "sinnae"
+      ],
+      "branches": [
+        {
+          "name": "응암 순환 구간 (방향성 미적용)",
+          "stationIds": [
+            "s6_610",
+            "s6_611",
+            "s3_322",
+            "s6_613",
+            "s3_321",
+            "s6_615",
+            "s6_610"
+          ]
+        }
+      ]
+    },
+    "7": {
+      "name": "7호선",
+      "stationIds": [
+        "s1_113",
+        "s7_713",
+        "s7_714",
+        "nowon",
+        "junggye",
+        "hagye",
+        "gongneung",
+        "taereungipgu",
+        "meokgol",
+        "junghwa",
+        "sangbong",
+        "s7_723",
+        "s7_724",
+        "s7_725",
+        "s7_726",
+        "s5_544",
+        "s7_728",
+        "s2_loop_212",
+        "s7_730",
+        "s7_731",
+        "s7_732",
+        "s7_733",
+        "s7_734",
+        "s7_735",
+        "s3_339",
+        "s7_737",
+        "s4_432",
+        "s7_739",
+        "s7_740",
+        "s7_741",
+        "s7_742",
+        "s7_743",
+        "s7_744",
+        "s7_745",
+        "s2_loop_233",
+        "s7_747",
+        "s1_P142",
+        "s7_749",
+        "s7_750",
+        "s7_751",
+        "s1_145"
+      ]
+    },
+    "8": {
+      "name": "8호선",
+      "stationIds": [
+        "s8_809",
+        "s8_810",
+        "s5_547",
+        "s8_812",
+        "s8_813",
+        "s2_loop_216",
+        "s8_815",
+        "s8_816",
+        "s3_350",
+        "s8_818",
+        "s8_819",
+        "s8_820"
+      ]
+    },
+    "9": {
+      "name": "9호선",
+      "stationIds": [
+        "s9_901",
+        "s5_512",
+        "s9_903",
+        "s9_904",
+        "s9_905",
+        "s9_906",
+        "s9_907",
+        "s9_908",
+        "s9_909",
+        "s9_910",
+        "s9_911",
+        "s9_912",
+        "s2_loop_237",
+        "s9_914",
+        "s5_526",
+        "s9_916",
+        "s1_136",
+        "s9_918",
+        "s9_919",
+        "s4_431",
+        "s9_921",
+        "s9_922",
+        "s3_339",
+        "s9_924",
+        "s9_925",
+        "s9_926",
+        "s9_927",
+        "s9_928",
+        "s9_929",
+        "s2_loop_218",
+        "s9_931",
+        "s9_932",
+        "s8_815",
+        "s9_934",
+        "s9_935",
+        "s5_P550",
+        "s9_937",
+        "s9_938"
+      ]
+    },
+    "K": {
+      "name": "경의중앙선",
+      "stationIds": [
+        "gj_hangukhanggongdae",
+        "gj_susaek",
+        "s6_618",
+        "gj_gajwa",
+        "s2_loop_239",
+        "gj_seogangdae",
+        "s5_529",
+        "s6_627",
+        "s1_135",
+        "s4_430",
+        "gj_seobinggo",
+        "gj_hannam",
+        "s3_335",
+        "gj_eungbong",
+        "s2_loop_208",
+        "cheongnyangni",
+        "hoegi",
+        "gj_jungnang",
+        "sangbong",
+        "gj_mangu",
+        "gj_yangwon",
+        "gj_guri"
+      ],
+      "branches": [
+        {
+          "name": "서울역 지선",
+          "stationIds": [
+            "gj_gajwa",
+            "gj_sinchon_gyeongui",
+            "s1_133"
+          ]
+        }
+      ]
+    },
+    "B": {
+      "name": "수인분당선",
+      "stationIds": [
+        "cheongnyangni",
+        "s2_loop_208",
+        "sb_k211",
+        "sb_k212",
+        "s7_732",
+        "s9_927",
+        "s2_loop_220",
+        "sb_k216",
+        "s3_344",
+        "sb_k218",
+        "sb_k219",
+        "sb_k220",
+        "s3_349",
+        "s8_820",
+        "sb_k223",
+        "sb_k224",
+        "sb_k225",
+        "sb_k226",
+        "sb_k227",
+        "sb_k228",
+        "sb_k229",
+        "sb_k230",
+        "sb_k231",
+        "sb_k232",
+        "sb_k233",
+        "sb_k234",
+        "sb_k235",
+        "sb_k236",
+        "sb_k237",
+        "sb_k238",
+        "sb_k239",
+        "sb_k240",
+        "sb_k241",
+        "sb_k242",
+        "sb_k243",
+        "sb_k244",
+        "sb_k245",
+        "sb_k246",
+        "sb_k247",
+        "sb_k248",
+        "sb_k249",
+        "sb_k250",
+        "sb_k251",
+        "sb_k252",
+        "sb_k253",
+        "sb_k254",
+        "sb_k255",
+        "sb_k256",
+        "sb_k257",
+        "sb_k258",
+        "sb_k259",
+        "sb_k260",
+        "sb_k261",
+        "sb_k262",
+        "sb_k263",
+        "sb_k264",
+        "sb_k265",
+        "sb_k266",
+        "sb_k267",
+        "sb_k269",
+        "sb_k270",
+        "sb_k271",
+        "sb_k272"
+      ],
+      "notes": "역간 물리적 인접관계. 청량리 연장 구간은 시간대별 운행 여부 미반영."
+    },
+    "S": {
+      "name": "신분당선",
+      "stationIds": [
+        "s3_337",
+        "s7_734",
+        "s9_925",
+        "s2_loop_222",
+        "s3_342",
+        "sd_yangjae_forest",
+        "sd_cheonggyesan",
+        "sd_pangyo",
+        "sb_k230",
+        "sb_k231",
+        "sd_dongcheon",
+        "sd_suji",
+        "sd_seongbok",
+        "sd_sanghyeon",
+        "sd_gwanggyojungang",
+        "sd_gwanggyo"
+      ],
+      "farePolicy": "separate-fare-required",
+      "additionalFareWon": null,
+      "notes": "별도 운임 대상이지만 추가 금액/거리/구간별 운임 계산은 게임에 아직 미적용."
+    }
+  },
+  "stations": {
+    "s1_113": {
+      "name": "도봉산",
+      "stationName": "도봉산역",
+      "lat": 37.689512,
+      "lng": 127.046063,
+      "lineIds": [
+        "1",
+        "7"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "113",
+        "7": "712"
+      },
+      "aliases": []
+    },
+    "s1_114": {
+      "name": "도봉",
+      "stationName": "도봉역",
+      "lat": 37.679212,
+      "lng": 127.045535,
+      "lineIds": [
+        "1"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "114"
+      },
+      "aliases": []
+    },
+    "s1_115": {
+      "name": "방학",
+      "stationName": "방학역",
+      "lat": 37.667438,
+      "lng": 127.044322,
+      "lineIds": [
+        "1"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "115"
+      },
+      "aliases": []
+    },
+    "changdong": {
+      "name": "창동",
+      "stationName": "창동역",
+      "lat": 37.653088,
+      "lng": 127.047274,
+      "lineIds": [
+        "1",
+        "4"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "116",
+        "4": "412"
+      },
+      "aliases": []
+    },
+    "nokcheon": {
+      "name": "녹천",
+      "stationName": "녹천역",
+      "lat": 37.644799,
+      "lng": 127.051269,
+      "lineIds": [
+        "1"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "117"
+      },
+      "aliases": []
+    },
+    "wolgye": {
+      "name": "월계",
+      "stationName": "월계역",
+      "lat": 37.633212,
+      "lng": 127.058831,
+      "lineIds": [
+        "1"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "118"
+      },
+      "aliases": []
+    },
+    "gwangundae": {
+      "name": "광운대",
+      "stationName": "광운대역",
+      "lat": 37.623632,
+      "lng": 127.061835,
+      "lineIds": [
+        "1"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "경춘선"
+      ],
+      "sourceCodes": {
+        "1": "119"
+      },
+      "aliases": []
+    },
+    "seokgye": {
+      "name": "석계",
+      "stationName": "석계역",
+      "lat": 37.614872,
+      "lng": 127.065595,
+      "lineIds": [
+        "1",
+        "6"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "120",
+        "6": "644"
+      },
+      "aliases": []
+    },
+    "sinimun": {
+      "name": "신이문",
+      "stationName": "신이문역",
+      "lat": 37.601854,
+      "lng": 127.067325,
+      "lineIds": [
+        "1"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "121"
+      },
+      "aliases": []
+    },
+    "oedaeap": {
+      "name": "외대앞",
+      "stationName": "외대앞역",
+      "lat": 37.596073,
+      "lng": 127.063549,
+      "lineIds": [
+        "1"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "122"
+      },
+      "aliases": []
+    },
+    "hoegi": {
+      "name": "회기",
+      "stationName": "회기역",
+      "lat": 37.58946,
+      "lng": 127.057583,
+      "lineIds": [
+        "1",
+        "K"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [
+        "경춘선"
+      ],
+      "sourceCodes": {
+        "1": "123"
+      },
+      "aliases": []
+    },
+    "cheongnyangni": {
+      "name": "청량리",
+      "stationName": "청량리역",
+      "lat": 37.579956,
+      "lng": 127.044585,
+      "lineIds": [
+        "1",
+        "B",
+        "K"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [
+        "경춘선"
+      ],
+      "sourceCodes": {
+        "1": "124",
+        "B": "K209"
+      },
+      "aliases": []
+    },
+    "jegidong": {
+      "name": "제기동",
+      "stationName": "제기동역",
+      "lat": 37.578103,
+      "lng": 127.034893,
+      "lineIds": [
+        "1"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "125"
+      },
+      "aliases": []
+    },
+    "sinseoldong": {
+      "name": "신설동",
+      "stationName": "신설동역",
+      "lat": 37.576048,
+      "lng": 127.024634,
+      "lineIds": [
+        "1",
+        "2"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [
+        "우이신설선"
+      ],
+      "sourceCodes": {
+        "1": "126",
+        "2": "seongsu/211-4"
+      },
+      "aliases": []
+    },
+    "dongmyoap": {
+      "name": "동묘앞",
+      "stationName": "동묘앞역",
+      "lat": 37.573197,
+      "lng": 127.01648,
+      "lineIds": [
+        "1",
+        "6"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "127",
+        "6": "636"
+      },
+      "aliases": []
+    },
+    "dongdaemun": {
+      "name": "동대문",
+      "stationName": "동대문역",
+      "lat": 37.571687,
+      "lng": 127.01093,
+      "lineIds": [
+        "1",
+        "4"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "128",
+        "4": "421"
+      },
+      "aliases": []
+    },
+    "s1_129": {
+      "name": "종로5가",
+      "stationName": "종로5가역",
+      "lat": 37.570976,
+      "lng": 127.001539,
+      "lineIds": [
+        "1"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "129"
+      },
+      "aliases": []
+    },
+    "s1_130": {
+      "name": "종로3가",
+      "stationName": "종로3가역",
+      "lat": 37.570421,
+      "lng": 126.992153,
+      "lineIds": [
+        "1",
+        "3",
+        "5"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "130",
+        "3": "329",
+        "5": "534"
+      },
+      "aliases": []
+    },
+    "s1_131": {
+      "name": "종각",
+      "stationName": "종각역",
+      "lat": 37.570229,
+      "lng": 126.983152,
+      "lineIds": [
+        "1"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "131"
+      },
+      "aliases": []
+    },
+    "s1_132": {
+      "name": "시청",
+      "stationName": "시청역",
+      "lat": 37.565344,
+      "lng": 126.977199,
+      "lineIds": [
+        "1",
+        "2"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "132",
+        "2": "loop/201"
+      },
+      "aliases": []
+    },
+    "s1_133": {
+      "name": "서울",
+      "stationName": "서울역",
+      "lat": 37.55598,
+      "lng": 126.972091,
+      "lineIds": [
+        "1",
+        "4",
+        "K"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [
+        "공항철도",
+        "광역급행철도A"
+      ],
+      "sourceCodes": {
+        "1": "133",
+        "4": "426"
+      },
+      "aliases": []
+    },
+    "s1_134": {
+      "name": "남영",
+      "stationName": "남영역",
+      "lat": 37.540566,
+      "lng": 126.971332,
+      "lineIds": [
+        "1"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "134"
+      },
+      "aliases": []
+    },
+    "s1_135": {
+      "name": "용산",
+      "stationName": "용산역",
+      "lat": 37.529774,
+      "lng": 126.96463,
+      "lineIds": [
+        "1",
+        "K"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "135"
+      },
+      "aliases": []
+    },
+    "s1_136": {
+      "name": "노량진",
+      "stationName": "노량진역",
+      "lat": 37.514055,
+      "lng": 126.94211,
+      "lineIds": [
+        "1",
+        "9"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "136",
+        "9": "917"
+      },
+      "aliases": []
+    },
+    "s1_137": {
+      "name": "대방",
+      "stationName": "대방역",
+      "lat": 37.513354,
+      "lng": 126.926497,
+      "lineIds": [
+        "1"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "신림선"
+      ],
+      "sourceCodes": {
+        "1": "137"
+      },
+      "aliases": []
+    },
+    "s1_138": {
+      "name": "신길",
+      "stationName": "신길역",
+      "lat": 37.516787,
+      "lng": 126.918367,
+      "lineIds": [
+        "1",
+        "5"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "138",
+        "5": "525"
+      },
+      "aliases": []
+    },
+    "s1_139": {
+      "name": "영등포",
+      "stationName": "영등포역",
+      "lat": 37.515673,
+      "lng": 126.90755,
+      "lineIds": [
+        "1"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "139"
+      },
+      "aliases": []
+    },
+    "s1_140": {
+      "name": "신도림",
+      "stationName": "신도림역",
+      "lat": 37.508908,
+      "lng": 126.891313,
+      "lineIds": [
+        "1",
+        "2"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "140",
+        "2": "sinjeong/234"
+      },
+      "aliases": []
+    },
+    "s1_141": {
+      "name": "구로",
+      "stationName": "구로역",
+      "lat": 37.503342,
+      "lng": 126.882309,
+      "lineIds": [
+        "1"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "141"
+      },
+      "aliases": []
+    },
+    "s1_142": {
+      "name": "구일",
+      "stationName": "구일역",
+      "lat": 37.496255,
+      "lng": 126.869691,
+      "lineIds": [
+        "1"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "142"
+      },
+      "aliases": []
+    },
+    "s1_143": {
+      "name": "개봉",
+      "stationName": "개봉역",
+      "lat": 37.494642,
+      "lng": 126.858716,
+      "lineIds": [
+        "1"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "143"
+      },
+      "aliases": []
+    },
+    "s1_144": {
+      "name": "오류동",
+      "stationName": "오류동역",
+      "lat": 37.494397,
+      "lng": 126.844807,
+      "lineIds": [
+        "1"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "144"
+      },
+      "aliases": []
+    },
+    "s1_145": {
+      "name": "온수",
+      "stationName": "온수역",
+      "lat": 37.4924,
+      "lng": 126.823829,
+      "lineIds": [
+        "1",
+        "7"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "145",
+        "7": "752"
+      },
+      "aliases": []
+    },
+    "s1_P142": {
+      "name": "가산디지털단지",
+      "stationName": "가산디지털단지역",
+      "lat": 37.481531,
+      "lng": 126.882615,
+      "lineIds": [
+        "1",
+        "7"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "P142",
+        "7": "748"
+      },
+      "aliases": []
+    },
+    "s1_P143": {
+      "name": "독산",
+      "stationName": "독산역",
+      "lat": 37.465976,
+      "lng": 126.889476,
+      "lineIds": [
+        "1"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "P143"
+      },
+      "aliases": []
+    },
+    "s1_P144": {
+      "name": "금천구청",
+      "stationName": "금천구청역",
+      "lat": 37.456194,
+      "lng": 126.893609,
+      "lineIds": [
+        "1"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "1": "P144"
+      },
+      "aliases": []
+    },
+    "s2_loop_202": {
+      "name": "을지로입구",
+      "stationName": "을지로입구역",
+      "lat": 37.565998,
+      "lng": 126.982569,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/202"
+      },
+      "aliases": []
+    },
+    "s2_loop_203": {
+      "name": "을지로3가",
+      "stationName": "을지로3가역",
+      "lat": 37.566292,
+      "lng": 126.991773,
+      "lineIds": [
+        "2",
+        "3"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/203",
+        "3": "330"
+      },
+      "aliases": []
+    },
+    "s2_loop_204": {
+      "name": "을지로4가",
+      "stationName": "을지로4가역",
+      "lat": 37.566611,
+      "lng": 126.998122,
+      "lineIds": [
+        "2",
+        "5"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/204",
+        "5": "535"
+      },
+      "aliases": []
+    },
+    "s2_loop_205": {
+      "name": "동대문역사문화공원",
+      "stationName": "동대문역사문화공원역",
+      "lat": 37.565597,
+      "lng": 127.009113,
+      "lineIds": [
+        "2",
+        "4",
+        "5"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/205",
+        "4": "422",
+        "5": "536"
+      },
+      "aliases": []
+    },
+    "s2_loop_206": {
+      "name": "신당",
+      "stationName": "신당역",
+      "lat": 37.565681,
+      "lng": 127.019488,
+      "lineIds": [
+        "2",
+        "6"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/206",
+        "6": "635"
+      },
+      "aliases": []
+    },
+    "s2_loop_207": {
+      "name": "상왕십리",
+      "stationName": "상왕십리역",
+      "lat": 37.564504,
+      "lng": 127.028872,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/207"
+      },
+      "aliases": []
+    },
+    "s2_loop_208": {
+      "name": "왕십리",
+      "stationName": "왕십리역",
+      "lat": 37.561159,
+      "lng": 127.035505,
+      "lineIds": [
+        "2",
+        "5",
+        "B",
+        "K"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/208",
+        "5": "540",
+        "B": "K210"
+      },
+      "aliases": []
+    },
+    "s2_loop_209": {
+      "name": "한양대",
+      "stationName": "한양대역",
+      "lat": 37.55658,
+      "lng": 127.043504,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/209"
+      },
+      "aliases": []
+    },
+    "s2_loop_210": {
+      "name": "뚝섬",
+      "stationName": "뚝섬역",
+      "lat": 37.54718,
+      "lng": 127.047413,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/210"
+      },
+      "aliases": []
+    },
+    "s2_loop_211": {
+      "name": "성수",
+      "stationName": "성수역",
+      "lat": 37.544628,
+      "lng": 127.055983,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "seongsu/211"
+      },
+      "aliases": []
+    },
+    "s2_loop_212": {
+      "name": "건대입구",
+      "stationName": "건대입구역",
+      "lat": 37.540408,
+      "lng": 127.069231,
+      "lineIds": [
+        "2",
+        "7"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/212",
+        "7": "729"
+      },
+      "aliases": []
+    },
+    "s2_loop_213": {
+      "name": "구의",
+      "stationName": "구의역",
+      "lat": 37.536857,
+      "lng": 127.085024,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/213"
+      },
+      "aliases": []
+    },
+    "s2_loop_214": {
+      "name": "강변",
+      "stationName": "강변역",
+      "lat": 37.535161,
+      "lng": 127.094684,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/214"
+      },
+      "aliases": []
+    },
+    "s2_loop_215": {
+      "name": "잠실나루",
+      "stationName": "잠실나루역",
+      "lat": 37.520688,
+      "lng": 127.103836,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/215"
+      },
+      "aliases": []
+    },
+    "s2_loop_216": {
+      "name": "잠실",
+      "stationName": "잠실역",
+      "lat": 37.513305,
+      "lng": 127.100129,
+      "lineIds": [
+        "2",
+        "8"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/216",
+        "8": "814"
+      },
+      "aliases": []
+    },
+    "s2_loop_217": {
+      "name": "잠실새내",
+      "stationName": "잠실새내역",
+      "lat": 37.511687,
+      "lng": 127.086162,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/217"
+      },
+      "aliases": []
+    },
+    "s2_loop_218": {
+      "name": "종합운동장",
+      "stationName": "종합운동장역",
+      "lat": 37.511008,
+      "lng": 127.073641,
+      "lineIds": [
+        "2",
+        "9"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/218",
+        "9": "930"
+      },
+      "aliases": []
+    },
+    "s2_loop_219": {
+      "name": "삼성",
+      "stationName": "삼성역",
+      "lat": 37.508827,
+      "lng": 127.063203,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/219"
+      },
+      "aliases": []
+    },
+    "s2_loop_220": {
+      "name": "선릉",
+      "stationName": "선릉역",
+      "lat": 37.504257,
+      "lng": 127.048174,
+      "lineIds": [
+        "2",
+        "B"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/220",
+        "B": "K215"
+      },
+      "aliases": []
+    },
+    "s2_loop_221": {
+      "name": "역삼",
+      "stationName": "역삼역",
+      "lat": 37.500658,
+      "lng": 127.03643,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/221"
+      },
+      "aliases": []
+    },
+    "s2_loop_222": {
+      "name": "강남",
+      "stationName": "강남역",
+      "lat": 37.497958,
+      "lng": 127.027539,
+      "lineIds": [
+        "2",
+        "S"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/222"
+      },
+      "aliases": []
+    },
+    "s2_loop_223": {
+      "name": "교대",
+      "stationName": "교대역",
+      "lat": 37.493957,
+      "lng": 127.014631,
+      "lineIds": [
+        "2",
+        "3"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/223",
+        "3": "340"
+      },
+      "aliases": []
+    },
+    "s2_loop_224": {
+      "name": "서초",
+      "stationName": "서초역",
+      "lat": 37.49191,
+      "lng": 127.007945,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/224"
+      },
+      "aliases": []
+    },
+    "s2_loop_225": {
+      "name": "방배",
+      "stationName": "방배역",
+      "lat": 37.481469,
+      "lng": 126.997627,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/225"
+      },
+      "aliases": []
+    },
+    "s2_loop_226": {
+      "name": "사당",
+      "stationName": "사당역",
+      "lat": 37.476536,
+      "lng": 126.981631,
+      "lineIds": [
+        "2",
+        "4"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/226",
+        "4": "433"
+      },
+      "aliases": []
+    },
+    "s2_loop_227": {
+      "name": "낙성대",
+      "stationName": "낙성대역",
+      "lat": 37.47693,
+      "lng": 126.963783,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/227"
+      },
+      "aliases": []
+    },
+    "s2_loop_228": {
+      "name": "서울대입구",
+      "stationName": "서울대입구역",
+      "lat": 37.481233,
+      "lng": 126.952745,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/228"
+      },
+      "aliases": []
+    },
+    "s2_loop_229": {
+      "name": "봉천",
+      "stationName": "봉천역",
+      "lat": 37.482416,
+      "lng": 126.941896,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/229"
+      },
+      "aliases": []
+    },
+    "s2_loop_230": {
+      "name": "신림",
+      "stationName": "신림역",
+      "lat": 37.484216,
+      "lng": 126.929573,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "신림선"
+      ],
+      "sourceCodes": {
+        "2": "loop/230"
+      },
+      "aliases": []
+    },
+    "s2_loop_231": {
+      "name": "신대방",
+      "stationName": "신대방역",
+      "lat": 37.487534,
+      "lng": 126.913279,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/231"
+      },
+      "aliases": []
+    },
+    "s2_loop_232": {
+      "name": "구로디지털단지",
+      "stationName": "구로디지털단지역",
+      "lat": 37.485005,
+      "lng": 126.902626,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/232"
+      },
+      "aliases": []
+    },
+    "s2_loop_233": {
+      "name": "대림",
+      "stationName": "대림역",
+      "lat": 37.492426,
+      "lng": 126.895293,
+      "lineIds": [
+        "2",
+        "7"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/233",
+        "7": "746"
+      },
+      "aliases": []
+    },
+    "s2_loop_235": {
+      "name": "문래",
+      "stationName": "문래역",
+      "lat": 37.517993,
+      "lng": 126.894766,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/235"
+      },
+      "aliases": []
+    },
+    "s2_loop_236": {
+      "name": "영등포구청",
+      "stationName": "영등포구청역",
+      "lat": 37.525766,
+      "lng": 126.896627,
+      "lineIds": [
+        "2",
+        "5"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/236",
+        "5": "523"
+      },
+      "aliases": []
+    },
+    "s2_loop_237": {
+      "name": "당산",
+      "stationName": "당산역",
+      "lat": 37.533877,
+      "lng": 126.902011,
+      "lineIds": [
+        "2",
+        "9"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/237",
+        "9": "913"
+      },
+      "aliases": []
+    },
+    "s2_loop_238": {
+      "name": "합정",
+      "stationName": "합정역",
+      "lat": 37.550025,
+      "lng": 126.914557,
+      "lineIds": [
+        "2",
+        "6"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/238",
+        "6": "622"
+      },
+      "aliases": []
+    },
+    "s2_loop_239": {
+      "name": "홍대입구",
+      "stationName": "홍대입구역",
+      "lat": 37.556748,
+      "lng": 126.923643,
+      "lineIds": [
+        "2",
+        "K"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [
+        "공항철도"
+      ],
+      "sourceCodes": {
+        "2": "loop/239"
+      },
+      "aliases": []
+    },
+    "s2_loop_240": {
+      "name": "신촌",
+      "stationName": "신촌역",
+      "lat": 37.555153,
+      "lng": 126.93689,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/240"
+      },
+      "aliases": []
+    },
+    "s2_loop_241": {
+      "name": "이대",
+      "stationName": "이대역",
+      "lat": 37.556734,
+      "lng": 126.945897,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/241"
+      },
+      "aliases": []
+    },
+    "s2_loop_242": {
+      "name": "아현",
+      "stationName": "아현역",
+      "lat": 37.557407,
+      "lng": 126.956079,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/242"
+      },
+      "aliases": []
+    },
+    "s2_loop_243": {
+      "name": "충정로",
+      "stationName": "충정로역",
+      "lat": 37.559742,
+      "lng": 126.964455,
+      "lineIds": [
+        "2",
+        "5"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "loop/243",
+        "5": "531"
+      },
+      "aliases": []
+    },
+    "s2_seongsu_211_1": {
+      "name": "용답",
+      "stationName": "용답역",
+      "lat": 37.561904,
+      "lng": 127.050899,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "seongsu/211-1"
+      },
+      "aliases": []
+    },
+    "s2_seongsu_211_2": {
+      "name": "신답",
+      "stationName": "신답역",
+      "lat": 37.57004,
+      "lng": 127.046481,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "seongsu/211-2"
+      },
+      "aliases": []
+    },
+    "s2_seongsu_211_3": {
+      "name": "용두",
+      "stationName": "용두역",
+      "lat": 37.574012,
+      "lng": 127.03811,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "seongsu/211-3"
+      },
+      "aliases": []
+    },
+    "s2_sinjeong_234_1": {
+      "name": "도림천",
+      "stationName": "도림천역",
+      "lat": 37.514759,
+      "lng": 126.882586,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "sinjeong/234-1"
+      },
+      "aliases": []
+    },
+    "s2_sinjeong_234_2": {
+      "name": "양천구청",
+      "stationName": "양천구청역",
+      "lat": 37.512194,
+      "lng": 126.865193,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "sinjeong/234-2"
+      },
+      "aliases": []
+    },
+    "s2_sinjeong_234_3": {
+      "name": "신정네거리",
+      "stationName": "신정네거리역",
+      "lat": 37.520218,
+      "lng": 126.852849,
+      "lineIds": [
+        "2"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "sinjeong/234-3"
+      },
+      "aliases": []
+    },
+    "s2_sinjeong_234_4": {
+      "name": "까치산",
+      "stationName": "까치산역",
+      "lat": 37.53181,
+      "lng": 126.846706,
+      "lineIds": [
+        "2",
+        "5"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "2": "sinjeong/234-4",
+        "5": "518"
+      },
+      "aliases": []
+    },
+    "s3_320": {
+      "name": "구파발",
+      "stationName": "구파발역",
+      "lat": 37.636612,
+      "lng": 126.918827,
+      "lineIds": [
+        "3"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "320"
+      },
+      "aliases": []
+    },
+    "s3_321": {
+      "name": "연신내",
+      "stationName": "연신내역",
+      "lat": 37.618855,
+      "lng": 126.920859,
+      "lineIds": [
+        "3",
+        "6"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [
+        "광역급행철도A"
+      ],
+      "sourceCodes": {
+        "3": "321",
+        "6": "614"
+      },
+      "aliases": []
+    },
+    "s3_322": {
+      "name": "불광",
+      "stationName": "불광역",
+      "lat": 37.610554,
+      "lng": 126.929843,
+      "lineIds": [
+        "3",
+        "6"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "322",
+        "6": "612"
+      },
+      "aliases": []
+    },
+    "s3_323": {
+      "name": "녹번",
+      "stationName": "녹번역",
+      "lat": 37.600882,
+      "lng": 126.935758,
+      "lineIds": [
+        "3"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "323"
+      },
+      "aliases": []
+    },
+    "s3_324": {
+      "name": "홍제",
+      "stationName": "홍제역",
+      "lat": 37.588851,
+      "lng": 126.944092,
+      "lineIds": [
+        "3"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "324"
+      },
+      "aliases": []
+    },
+    "s3_325": {
+      "name": "무악재",
+      "stationName": "무악재역",
+      "lat": 37.582658,
+      "lng": 126.950131,
+      "lineIds": [
+        "3"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "325"
+      },
+      "aliases": []
+    },
+    "s3_326": {
+      "name": "독립문",
+      "stationName": "독립문역",
+      "lat": 37.574534,
+      "lng": 126.957902,
+      "lineIds": [
+        "3"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "326"
+      },
+      "aliases": []
+    },
+    "s3_327": {
+      "name": "경복궁",
+      "stationName": "경복궁역",
+      "lat": 37.575844,
+      "lng": 126.973576,
+      "lineIds": [
+        "3"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "327"
+      },
+      "aliases": []
+    },
+    "s3_328": {
+      "name": "안국",
+      "stationName": "안국역",
+      "lat": 37.576562,
+      "lng": 126.98547,
+      "lineIds": [
+        "3"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "328"
+      },
+      "aliases": []
+    },
+    "s3_331": {
+      "name": "충무로",
+      "stationName": "충무로역",
+      "lat": 37.561302,
+      "lng": 126.995473,
+      "lineIds": [
+        "3",
+        "4"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "331",
+        "4": "423"
+      },
+      "aliases": []
+    },
+    "s3_332": {
+      "name": "동대입구",
+      "stationName": "동대입구역",
+      "lat": 37.55816,
+      "lng": 127.005273,
+      "lineIds": [
+        "3"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "332"
+      },
+      "aliases": []
+    },
+    "s3_333": {
+      "name": "약수",
+      "stationName": "약수역",
+      "lat": 37.554674,
+      "lng": 127.010628,
+      "lineIds": [
+        "3",
+        "6"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "333",
+        "6": "633"
+      },
+      "aliases": []
+    },
+    "s3_334": {
+      "name": "금호",
+      "stationName": "금호역",
+      "lat": 37.548269,
+      "lng": 127.015785,
+      "lineIds": [
+        "3"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "334"
+      },
+      "aliases": []
+    },
+    "s3_335": {
+      "name": "옥수",
+      "stationName": "옥수역",
+      "lat": 37.541653,
+      "lng": 127.017303,
+      "lineIds": [
+        "3",
+        "K"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "335"
+      },
+      "aliases": []
+    },
+    "s3_336": {
+      "name": "압구정",
+      "stationName": "압구정역",
+      "lat": 37.526169,
+      "lng": 127.028502,
+      "lineIds": [
+        "3"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "336"
+      },
+      "aliases": []
+    },
+    "s3_337": {
+      "name": "신사",
+      "stationName": "신사역",
+      "lat": 37.516438,
+      "lng": 127.020247,
+      "lineIds": [
+        "3",
+        "S"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "337"
+      },
+      "aliases": []
+    },
+    "s3_338": {
+      "name": "잠원",
+      "stationName": "잠원역",
+      "lat": 37.512989,
+      "lng": 127.011613,
+      "lineIds": [
+        "3"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "338"
+      },
+      "aliases": []
+    },
+    "s3_339": {
+      "name": "고속터미널",
+      "stationName": "고속터미널역",
+      "lat": 37.504953,
+      "lng": 127.004916,
+      "lineIds": [
+        "3",
+        "7",
+        "9"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "339",
+        "7": "736",
+        "9": "923"
+      },
+      "aliases": []
+    },
+    "s3_341": {
+      "name": "남부터미널",
+      "stationName": "남부터미널역",
+      "lat": 37.48494,
+      "lng": 127.016289,
+      "lineIds": [
+        "3"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "341"
+      },
+      "aliases": []
+    },
+    "s3_342": {
+      "name": "양재",
+      "stationName": "양재역",
+      "lat": 37.48466,
+      "lng": 127.03513,
+      "lineIds": [
+        "3",
+        "S"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "342"
+      },
+      "aliases": []
+    },
+    "s3_343": {
+      "name": "매봉",
+      "stationName": "매봉역",
+      "lat": 37.487114,
+      "lng": 127.046907,
+      "lineIds": [
+        "3"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "343"
+      },
+      "aliases": []
+    },
+    "s3_344": {
+      "name": "도곡",
+      "stationName": "도곡역",
+      "lat": 37.491129,
+      "lng": 127.055694,
+      "lineIds": [
+        "3",
+        "B"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "344",
+        "B": "K217"
+      },
+      "aliases": []
+    },
+    "s3_345": {
+      "name": "대치",
+      "stationName": "대치역",
+      "lat": 37.494601,
+      "lng": 127.063449,
+      "lineIds": [
+        "3"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "345"
+      },
+      "aliases": []
+    },
+    "s3_346": {
+      "name": "학여울",
+      "stationName": "학여울역",
+      "lat": 37.496757,
+      "lng": 127.070541,
+      "lineIds": [
+        "3"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "346"
+      },
+      "aliases": []
+    },
+    "s3_347": {
+      "name": "대청",
+      "stationName": "대청역",
+      "lat": 37.493607,
+      "lng": 127.079526,
+      "lineIds": [
+        "3"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "347"
+      },
+      "aliases": []
+    },
+    "s3_348": {
+      "name": "일원",
+      "stationName": "일원역",
+      "lat": 37.48389,
+      "lng": 127.08416,
+      "lineIds": [
+        "3"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "348"
+      },
+      "aliases": []
+    },
+    "s3_349": {
+      "name": "수서",
+      "stationName": "수서역",
+      "lat": 37.487507,
+      "lng": 127.101324,
+      "lineIds": [
+        "3",
+        "B"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [
+        "광역급행철도A"
+      ],
+      "sourceCodes": {
+        "3": "349",
+        "B": "K221"
+      },
+      "aliases": []
+    },
+    "s3_350": {
+      "name": "가락시장",
+      "stationName": "가락시장역",
+      "lat": 37.492368,
+      "lng": 127.118101,
+      "lineIds": [
+        "3",
+        "8"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "350",
+        "8": "817"
+      },
+      "aliases": []
+    },
+    "s3_351": {
+      "name": "경찰병원",
+      "stationName": "경찰병원역",
+      "lat": 37.495754,
+      "lng": 127.124198,
+      "lineIds": [
+        "3"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "351"
+      },
+      "aliases": []
+    },
+    "s3_352": {
+      "name": "오금",
+      "stationName": "오금역",
+      "lat": 37.502288,
+      "lng": 127.128344,
+      "lineIds": [
+        "3",
+        "5"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "3": "352",
+        "5": "P552"
+      },
+      "aliases": []
+    },
+    "s4_409": {
+      "name": "불암산",
+      "stationName": "불암산역",
+      "lat": 37.66956,
+      "lng": 127.078404,
+      "lineIds": [
+        "4"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "4": "409"
+      },
+      "aliases": []
+    },
+    "s4_410": {
+      "name": "상계",
+      "stationName": "상계역",
+      "lat": 37.660576,
+      "lng": 127.073199,
+      "lineIds": [
+        "4"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "4": "410"
+      },
+      "aliases": []
+    },
+    "nowon": {
+      "name": "노원",
+      "stationName": "노원역",
+      "lat": 37.65627,
+      "lng": 127.063276,
+      "lineIds": [
+        "4",
+        "7"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "4": "411",
+        "7": "715"
+      },
+      "aliases": []
+    },
+    "ssangmun": {
+      "name": "쌍문",
+      "stationName": "쌍문역",
+      "lat": 37.648627,
+      "lng": 127.034709,
+      "lineIds": [
+        "4"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "4": "413"
+      },
+      "aliases": []
+    },
+    "suyu": {
+      "name": "수유",
+      "stationName": "수유역",
+      "lat": 37.638052,
+      "lng": 127.025732,
+      "lineIds": [
+        "4"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "4": "414"
+      },
+      "aliases": []
+    },
+    "mia": {
+      "name": "미아",
+      "stationName": "미아역",
+      "lat": 37.62667,
+      "lng": 127.025983,
+      "lineIds": [
+        "4"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "4": "415"
+      },
+      "aliases": []
+    },
+    "miasageori": {
+      "name": "미아사거리",
+      "stationName": "미아사거리역",
+      "lat": 37.613292,
+      "lng": 127.030053,
+      "lineIds": [
+        "4"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "4": "416"
+      },
+      "aliases": []
+    },
+    "gireum": {
+      "name": "길음",
+      "stationName": "길음역",
+      "lat": 37.603407,
+      "lng": 127.025053,
+      "lineIds": [
+        "4"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "4": "417"
+      },
+      "aliases": []
+    },
+    "seongshin-yeodaeipgu": {
+      "name": "성신여대입구",
+      "stationName": "성신여대입구역",
+      "lat": 37.592612,
+      "lng": 127.016441,
+      "lineIds": [
+        "4"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "우이신설선"
+      ],
+      "sourceCodes": {
+        "4": "418"
+      },
+      "aliases": []
+    },
+    "hanseongdaeipgu": {
+      "name": "한성대입구",
+      "stationName": "한성대입구역",
+      "lat": 37.588458,
+      "lng": 127.006221,
+      "lineIds": [
+        "4"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "4": "419"
+      },
+      "aliases": []
+    },
+    "hyehwa": {
+      "name": "혜화",
+      "stationName": "혜화역",
+      "lat": 37.582336,
+      "lng": 127.001844,
+      "lineIds": [
+        "4"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "4": "420"
+      },
+      "aliases": []
+    },
+    "s4_424": {
+      "name": "명동",
+      "stationName": "명동역",
+      "lat": 37.561055,
+      "lng": 126.988271,
+      "lineIds": [
+        "4"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "4": "424"
+      },
+      "aliases": []
+    },
+    "s4_425": {
+      "name": "회현",
+      "stationName": "회현역",
+      "lat": 37.559698,
+      "lng": 126.979565,
+      "lineIds": [
+        "4"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "4": "425"
+      },
+      "aliases": []
+    },
+    "s4_427": {
+      "name": "숙대입구",
+      "stationName": "숙대입구역",
+      "lat": 37.545124,
+      "lng": 126.971952,
+      "lineIds": [
+        "4"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "4": "427"
+      },
+      "aliases": []
+    },
+    "s4_428": {
+      "name": "삼각지",
+      "stationName": "삼각지역",
+      "lat": 37.535057,
+      "lng": 126.973354,
+      "lineIds": [
+        "4",
+        "6"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "4": "428",
+        "6": "628"
+      },
+      "aliases": []
+    },
+    "s4_429": {
+      "name": "신용산",
+      "stationName": "신용산역",
+      "lat": 37.52919,
+      "lng": 126.96858,
+      "lineIds": [
+        "4"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "4": "429"
+      },
+      "aliases": []
+    },
+    "s4_430": {
+      "name": "이촌",
+      "stationName": "이촌역",
+      "lat": 37.522525,
+      "lng": 126.97335,
+      "lineIds": [
+        "4",
+        "K"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "4": "430"
+      },
+      "aliases": []
+    },
+    "s4_431": {
+      "name": "동작",
+      "stationName": "동작역",
+      "lat": 37.503567,
+      "lng": 126.980171,
+      "lineIds": [
+        "4",
+        "9"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "4": "431",
+        "9": "920"
+      },
+      "aliases": []
+    },
+    "s4_432": {
+      "name": "이수",
+      "stationName": "이수역",
+      "lat": 37.487521,
+      "lng": 126.982309,
+      "lineIds": [
+        "4",
+        "7"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "4": "432",
+        "7": "738"
+      },
+      "aliases": [
+        "총신대입구(이수)"
+      ]
+    },
+    "s4_434": {
+      "name": "남태령",
+      "stationName": "남태령역",
+      "lat": 37.464339,
+      "lng": 126.989081,
+      "lineIds": [
+        "4"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "4": "434"
+      },
+      "aliases": []
+    },
+    "s5_510": {
+      "name": "방화",
+      "stationName": "방화역",
+      "lat": 37.577669,
+      "lng": 126.812822,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "510"
+      },
+      "aliases": []
+    },
+    "s5_511": {
+      "name": "개화산",
+      "stationName": "개화산역",
+      "lat": 37.572458,
+      "lng": 126.806838,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "511"
+      },
+      "aliases": []
+    },
+    "s5_512": {
+      "name": "김포공항",
+      "stationName": "김포공항역",
+      "lat": 37.56217,
+      "lng": 126.801273,
+      "lineIds": [
+        "5",
+        "9"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [
+        "공항철도",
+        "서해선",
+        "김포골드라인"
+      ],
+      "sourceCodes": {
+        "5": "512",
+        "9": "902"
+      },
+      "aliases": []
+    },
+    "s5_513": {
+      "name": "송정",
+      "stationName": "송정역",
+      "lat": 37.561411,
+      "lng": 126.812052,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "513"
+      },
+      "aliases": []
+    },
+    "s5_514": {
+      "name": "마곡",
+      "stationName": "마곡역",
+      "lat": 37.560199,
+      "lng": 126.825548,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "514"
+      },
+      "aliases": []
+    },
+    "s5_515": {
+      "name": "발산",
+      "stationName": "발산역",
+      "lat": 37.558989,
+      "lng": 126.837335,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "515"
+      },
+      "aliases": []
+    },
+    "s5_516": {
+      "name": "우장산",
+      "stationName": "우장산역",
+      "lat": 37.548864,
+      "lng": 126.83633,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "516"
+      },
+      "aliases": []
+    },
+    "s5_517": {
+      "name": "화곡",
+      "stationName": "화곡역",
+      "lat": 37.541585,
+      "lng": 126.840436,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "517"
+      },
+      "aliases": []
+    },
+    "s5_519": {
+      "name": "신정",
+      "stationName": "신정역",
+      "lat": 37.525001,
+      "lng": 126.856176,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "519"
+      },
+      "aliases": []
+    },
+    "s5_520": {
+      "name": "목동",
+      "stationName": "목동역",
+      "lat": 37.526088,
+      "lng": 126.864296,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "520"
+      },
+      "aliases": []
+    },
+    "s5_521": {
+      "name": "오목교",
+      "stationName": "오목교역",
+      "lat": 37.524557,
+      "lng": 126.875049,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "521"
+      },
+      "aliases": []
+    },
+    "s5_522": {
+      "name": "양평",
+      "stationName": "양평역",
+      "lat": 37.525614,
+      "lng": 126.886177,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "522"
+      },
+      "aliases": []
+    },
+    "s5_524": {
+      "name": "영등포시장",
+      "stationName": "영등포시장역",
+      "lat": 37.52276,
+      "lng": 126.905143,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "524"
+      },
+      "aliases": []
+    },
+    "s5_526": {
+      "name": "여의도",
+      "stationName": "여의도역",
+      "lat": 37.521578,
+      "lng": 126.924318,
+      "lineIds": [
+        "5",
+        "9"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "526",
+        "9": "915"
+      },
+      "aliases": []
+    },
+    "s5_527": {
+      "name": "여의나루",
+      "stationName": "여의나루역",
+      "lat": 37.527145,
+      "lng": 126.932807,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "527"
+      },
+      "aliases": []
+    },
+    "s5_528": {
+      "name": "마포",
+      "stationName": "마포역",
+      "lat": 37.539718,
+      "lng": 126.946043,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "528"
+      },
+      "aliases": []
+    },
+    "s5_529": {
+      "name": "공덕",
+      "stationName": "공덕역",
+      "lat": 37.544005,
+      "lng": 126.951058,
+      "lineIds": [
+        "5",
+        "6",
+        "K"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [
+        "공항철도"
+      ],
+      "sourceCodes": {
+        "5": "529",
+        "6": "626"
+      },
+      "aliases": []
+    },
+    "s5_530": {
+      "name": "애오개",
+      "stationName": "애오개역",
+      "lat": 37.553592,
+      "lng": 126.956733,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "530"
+      },
+      "aliases": []
+    },
+    "s5_532": {
+      "name": "서대문",
+      "stationName": "서대문역",
+      "lat": 37.565812,
+      "lng": 126.966639,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "532"
+      },
+      "aliases": []
+    },
+    "s5_533": {
+      "name": "광화문",
+      "stationName": "광화문역",
+      "lat": 37.570545,
+      "lng": 126.976568,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "533"
+      },
+      "aliases": []
+    },
+    "s5_537": {
+      "name": "청구",
+      "stationName": "청구역",
+      "lat": 37.560237,
+      "lng": 127.01379,
+      "lineIds": [
+        "5",
+        "6"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "537",
+        "6": "634"
+      },
+      "aliases": []
+    },
+    "s5_538": {
+      "name": "신금호",
+      "stationName": "신금호역",
+      "lat": 37.554504,
+      "lng": 127.020403,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "538"
+      },
+      "aliases": []
+    },
+    "s5_539": {
+      "name": "행당",
+      "stationName": "행당역",
+      "lat": 37.557297,
+      "lng": 127.029482,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "539"
+      },
+      "aliases": []
+    },
+    "s5_541": {
+      "name": "마장",
+      "stationName": "마장역",
+      "lat": 37.566066,
+      "lng": 127.042921,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "541"
+      },
+      "aliases": []
+    },
+    "s5_542": {
+      "name": "답십리",
+      "stationName": "답십리역",
+      "lat": 37.566833,
+      "lng": 127.05266,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "542"
+      },
+      "aliases": []
+    },
+    "s5_543": {
+      "name": "장한평",
+      "stationName": "장한평역",
+      "lat": 37.561438,
+      "lng": 127.064601,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "543"
+      },
+      "aliases": []
+    },
+    "s5_544": {
+      "name": "군자",
+      "stationName": "군자역",
+      "lat": 37.557102,
+      "lng": 127.079559,
+      "lineIds": [
+        "5",
+        "7"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "544",
+        "7": "727"
+      },
+      "aliases": []
+    },
+    "s5_545": {
+      "name": "아차산",
+      "stationName": "아차산역",
+      "lat": 37.552005,
+      "lng": 127.089609,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "545"
+      },
+      "aliases": []
+    },
+    "s5_546": {
+      "name": "광나루",
+      "stationName": "광나루역",
+      "lat": 37.545301,
+      "lng": 127.103478,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "546"
+      },
+      "aliases": []
+    },
+    "s5_547": {
+      "name": "천호",
+      "stationName": "천호역",
+      "lat": 37.538566,
+      "lng": 127.123539,
+      "lineIds": [
+        "5",
+        "8"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "547",
+        "8": "811"
+      },
+      "aliases": []
+    },
+    "s5_548": {
+      "name": "강동",
+      "stationName": "강동역",
+      "lat": 37.53581,
+      "lng": 127.13249,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "548"
+      },
+      "aliases": []
+    },
+    "s5_549": {
+      "name": "길동",
+      "stationName": "길동역",
+      "lat": 37.538022,
+      "lng": 127.140085,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "549"
+      },
+      "aliases": []
+    },
+    "s5_550": {
+      "name": "굽은다리",
+      "stationName": "굽은다리역",
+      "lat": 37.545442,
+      "lng": 127.142844,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "550"
+      },
+      "aliases": []
+    },
+    "s5_551": {
+      "name": "명일",
+      "stationName": "명일역",
+      "lat": 37.551317,
+      "lng": 127.144002,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "551"
+      },
+      "aliases": []
+    },
+    "s5_552": {
+      "name": "고덕",
+      "stationName": "고덕역",
+      "lat": 37.555002,
+      "lng": 127.154214,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "552"
+      },
+      "aliases": []
+    },
+    "s5_553": {
+      "name": "상일동",
+      "stationName": "상일동역",
+      "lat": 37.556714,
+      "lng": 127.166381,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "553"
+      },
+      "aliases": []
+    },
+    "s5_554": {
+      "name": "강일",
+      "stationName": "강일역",
+      "lat": 37.557521,
+      "lng": 127.176018,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "554"
+      },
+      "aliases": []
+    },
+    "s5_P549": {
+      "name": "둔촌동",
+      "stationName": "둔촌동역",
+      "lat": 37.527787,
+      "lng": 127.136219,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "P549"
+      },
+      "aliases": []
+    },
+    "s5_P550": {
+      "name": "올림픽공원",
+      "stationName": "올림픽공원역",
+      "lat": 37.516217,
+      "lng": 127.130957,
+      "lineIds": [
+        "5",
+        "9"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "P550",
+        "9": "936"
+      },
+      "aliases": []
+    },
+    "s5_P551": {
+      "name": "방이",
+      "stationName": "방이역",
+      "lat": 37.508752,
+      "lng": 127.126054,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "P551"
+      },
+      "aliases": []
+    },
+    "s5_P553": {
+      "name": "개롱",
+      "stationName": "개롱역",
+      "lat": 37.498097,
+      "lng": 127.134817,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "P553"
+      },
+      "aliases": []
+    },
+    "s5_P554": {
+      "name": "거여",
+      "stationName": "거여역",
+      "lat": 37.493208,
+      "lng": 127.143983,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "P554"
+      },
+      "aliases": []
+    },
+    "s5_P555": {
+      "name": "마천",
+      "stationName": "마천역",
+      "lat": 37.494972,
+      "lng": 127.152784,
+      "lineIds": [
+        "5"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "5": "P555"
+      },
+      "aliases": []
+    },
+    "s6_610": {
+      "name": "응암",
+      "stationName": "응암역",
+      "lat": 37.59859,
+      "lng": 126.915583,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "610"
+      },
+      "aliases": []
+    },
+    "s6_611": {
+      "name": "역촌",
+      "stationName": "역촌역",
+      "lat": 37.60605,
+      "lng": 126.922764,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "611"
+      },
+      "aliases": []
+    },
+    "s6_613": {
+      "name": "독바위",
+      "stationName": "독바위역",
+      "lat": 37.618413,
+      "lng": 126.933035,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "613"
+      },
+      "aliases": []
+    },
+    "s6_615": {
+      "name": "구산",
+      "stationName": "구산역",
+      "lat": 37.611223,
+      "lng": 126.917246,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "615"
+      },
+      "aliases": []
+    },
+    "s6_616": {
+      "name": "새절",
+      "stationName": "새절역",
+      "lat": 37.591148,
+      "lng": 126.913613,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "616"
+      },
+      "aliases": []
+    },
+    "s6_617": {
+      "name": "증산",
+      "stationName": "증산역",
+      "lat": 37.583989,
+      "lng": 126.909785,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "617"
+      },
+      "aliases": []
+    },
+    "s6_618": {
+      "name": "디지털미디어시티",
+      "stationName": "디지털미디어시티역",
+      "lat": 37.577005,
+      "lng": 126.898643,
+      "lineIds": [
+        "6",
+        "K"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [
+        "공항철도"
+      ],
+      "sourceCodes": {
+        "6": "618"
+      },
+      "aliases": []
+    },
+    "s6_619": {
+      "name": "월드컵경기장",
+      "stationName": "월드컵경기장역",
+      "lat": 37.569439,
+      "lng": 126.899077,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "619"
+      },
+      "aliases": []
+    },
+    "s6_620": {
+      "name": "마포구청",
+      "stationName": "마포구청역",
+      "lat": 37.563535,
+      "lng": 126.903326,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "620"
+      },
+      "aliases": []
+    },
+    "s6_621": {
+      "name": "망원",
+      "stationName": "망원역",
+      "lat": 37.556031,
+      "lng": 126.910129,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "621"
+      },
+      "aliases": []
+    },
+    "s6_623": {
+      "name": "상수",
+      "stationName": "상수역",
+      "lat": 37.547704,
+      "lng": 126.92292,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "623"
+      },
+      "aliases": []
+    },
+    "s6_624": {
+      "name": "광흥창",
+      "stationName": "광흥창역",
+      "lat": 37.547464,
+      "lng": 126.931971,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "624"
+      },
+      "aliases": []
+    },
+    "s6_625": {
+      "name": "대흥",
+      "stationName": "대흥역",
+      "lat": 37.547732,
+      "lng": 126.942214,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "625"
+      },
+      "aliases": []
+    },
+    "s6_627": {
+      "name": "효창공원앞",
+      "stationName": "효창공원앞역",
+      "lat": 37.539279,
+      "lng": 126.961348,
+      "lineIds": [
+        "6",
+        "K"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "627"
+      },
+      "aliases": []
+    },
+    "s6_629": {
+      "name": "녹사평",
+      "stationName": "녹사평역",
+      "lat": 37.53469,
+      "lng": 126.98665,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "629"
+      },
+      "aliases": []
+    },
+    "s6_630": {
+      "name": "이태원",
+      "stationName": "이태원역",
+      "lat": 37.534485,
+      "lng": 126.994369,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "630"
+      },
+      "aliases": []
+    },
+    "s6_631": {
+      "name": "한강진",
+      "stationName": "한강진역",
+      "lat": 37.53956,
+      "lng": 127.001729,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "631"
+      },
+      "aliases": []
+    },
+    "s6_632": {
+      "name": "버티고개",
+      "stationName": "버티고개역",
+      "lat": 37.547933,
+      "lng": 127.006948,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "632"
+      },
+      "aliases": []
+    },
+    "changsin": {
+      "name": "창신",
+      "stationName": "창신역",
+      "lat": 37.579661,
+      "lng": 127.015241,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "637"
+      },
+      "aliases": []
+    },
+    "bomun": {
+      "name": "보문",
+      "stationName": "보문역",
+      "lat": 37.585274,
+      "lng": 127.019351,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "우이신설선"
+      ],
+      "sourceCodes": {
+        "6": "638"
+      },
+      "aliases": []
+    },
+    "anam": {
+      "name": "안암",
+      "stationName": "안암역",
+      "lat": 37.586272,
+      "lng": 127.029005,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "639"
+      },
+      "aliases": []
+    },
+    "goryeodae": {
+      "name": "고려대",
+      "stationName": "고려대역",
+      "lat": 37.590508,
+      "lng": 127.036296,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "640"
+      },
+      "aliases": []
+    },
+    "wolgok": {
+      "name": "월곡",
+      "stationName": "월곡역",
+      "lat": 37.601948,
+      "lng": 127.041518,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "641"
+      },
+      "aliases": []
+    },
+    "sangwolgok": {
+      "name": "상월곡",
+      "stationName": "상월곡역",
+      "lat": 37.606377,
+      "lng": 127.048491,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "642"
+      },
+      "aliases": []
+    },
+    "dolgoti": {
+      "name": "돌곶이",
+      "stationName": "돌곶이역",
+      "lat": 37.610537,
+      "lng": 127.056431,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "643"
+      },
+      "aliases": []
+    },
+    "taereungipgu": {
+      "name": "태릉입구",
+      "stationName": "태릉입구역",
+      "lat": 37.617338,
+      "lng": 127.074735,
+      "lineIds": [
+        "6",
+        "7"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "645",
+        "7": "719"
+      },
+      "aliases": []
+    },
+    "hwarangdae": {
+      "name": "화랑대",
+      "stationName": "화랑대역",
+      "lat": 37.620064,
+      "lng": 127.084689,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "646"
+      },
+      "aliases": []
+    },
+    "bonghwasan": {
+      "name": "봉화산",
+      "stationName": "봉화산역",
+      "lat": 37.617283,
+      "lng": 127.091401,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "6": "647"
+      },
+      "aliases": []
+    },
+    "sinnae": {
+      "name": "신내",
+      "stationName": "신내역",
+      "lat": 37.612887,
+      "lng": 127.103218,
+      "lineIds": [
+        "6"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "경춘선"
+      ],
+      "sourceCodes": {
+        "6": "648"
+      },
+      "aliases": []
+    },
+    "s7_713": {
+      "name": "수락산",
+      "stationName": "수락산역",
+      "lat": 37.677804,
+      "lng": 127.055314,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "713"
+      },
+      "aliases": []
+    },
+    "s7_714": {
+      "name": "마들",
+      "stationName": "마들역",
+      "lat": 37.664985,
+      "lng": 127.057701,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "714"
+      },
+      "aliases": []
+    },
+    "junggye": {
+      "name": "중계",
+      "stationName": "중계역",
+      "lat": 37.644583,
+      "lng": 127.064303,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "716"
+      },
+      "aliases": []
+    },
+    "hagye": {
+      "name": "하계",
+      "stationName": "하계역",
+      "lat": 37.636352,
+      "lng": 127.06799,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "717"
+      },
+      "aliases": []
+    },
+    "gongneung": {
+      "name": "공릉",
+      "stationName": "공릉역",
+      "lat": 37.625742,
+      "lng": 127.072896,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "718"
+      },
+      "aliases": []
+    },
+    "meokgol": {
+      "name": "먹골",
+      "stationName": "먹골역",
+      "lat": 37.610637,
+      "lng": 127.077725,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "720"
+      },
+      "aliases": []
+    },
+    "junghwa": {
+      "name": "중화",
+      "stationName": "중화역",
+      "lat": 37.602545,
+      "lng": 127.079264,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "721"
+      },
+      "aliases": []
+    },
+    "sangbong": {
+      "name": "상봉",
+      "stationName": "상봉역",
+      "lat": 37.595577,
+      "lng": 127.085716,
+      "lineIds": [
+        "7",
+        "K"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [
+        "경춘선"
+      ],
+      "sourceCodes": {
+        "7": "722"
+      },
+      "aliases": []
+    },
+    "s7_723": {
+      "name": "면목",
+      "stationName": "면목역",
+      "lat": 37.588671,
+      "lng": 127.087503,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "723"
+      },
+      "aliases": []
+    },
+    "s7_724": {
+      "name": "사가정",
+      "stationName": "사가정역",
+      "lat": 37.580912,
+      "lng": 127.088502,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "724"
+      },
+      "aliases": []
+    },
+    "s7_725": {
+      "name": "용마산",
+      "stationName": "용마산역",
+      "lat": 37.573752,
+      "lng": 127.086802,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "725"
+      },
+      "aliases": []
+    },
+    "s7_726": {
+      "name": "중곡",
+      "stationName": "중곡역",
+      "lat": 37.565877,
+      "lng": 127.084291,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "726"
+      },
+      "aliases": []
+    },
+    "s7_728": {
+      "name": "어린이대공원",
+      "stationName": "어린이대공원역",
+      "lat": 37.547962,
+      "lng": 127.07465,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "728"
+      },
+      "aliases": []
+    },
+    "s7_730": {
+      "name": "자양",
+      "stationName": "자양역",
+      "lat": 37.531558,
+      "lng": 127.066714,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "730"
+      },
+      "aliases": []
+    },
+    "s7_731": {
+      "name": "청담",
+      "stationName": "청담역",
+      "lat": 37.519097,
+      "lng": 127.051851,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "731"
+      },
+      "aliases": []
+    },
+    "s7_732": {
+      "name": "강남구청",
+      "stationName": "강남구청역",
+      "lat": 37.517185,
+      "lng": 127.04122,
+      "lineIds": [
+        "7",
+        "B"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "732",
+        "B": "K213"
+      },
+      "aliases": []
+    },
+    "s7_733": {
+      "name": "학동",
+      "stationName": "학동역",
+      "lat": 37.514262,
+      "lng": 127.031738,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "733"
+      },
+      "aliases": []
+    },
+    "s7_734": {
+      "name": "논현",
+      "stationName": "논현역",
+      "lat": 37.511108,
+      "lng": 127.021385,
+      "lineIds": [
+        "7",
+        "S"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "734"
+      },
+      "aliases": []
+    },
+    "s7_735": {
+      "name": "반포",
+      "stationName": "반포역",
+      "lat": 37.508171,
+      "lng": 127.011717,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "735"
+      },
+      "aliases": []
+    },
+    "s7_737": {
+      "name": "내방",
+      "stationName": "내방역",
+      "lat": 37.48764,
+      "lng": 126.993541,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "737"
+      },
+      "aliases": []
+    },
+    "s7_739": {
+      "name": "남성",
+      "stationName": "남성역",
+      "lat": 37.484688,
+      "lng": 126.971108,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "739"
+      },
+      "aliases": []
+    },
+    "s7_740": {
+      "name": "숭실대입구",
+      "stationName": "숭실대입구역",
+      "lat": 37.496258,
+      "lng": 126.953649,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "740"
+      },
+      "aliases": []
+    },
+    "s7_741": {
+      "name": "상도",
+      "stationName": "상도역",
+      "lat": 37.50279,
+      "lng": 126.947949,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "741"
+      },
+      "aliases": []
+    },
+    "s7_742": {
+      "name": "장승배기",
+      "stationName": "장승배기역",
+      "lat": 37.504845,
+      "lng": 126.939025,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "742"
+      },
+      "aliases": []
+    },
+    "s7_743": {
+      "name": "신대방삼거리",
+      "stationName": "신대방삼거리역",
+      "lat": 37.499717,
+      "lng": 126.928218,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "743"
+      },
+      "aliases": []
+    },
+    "s7_744": {
+      "name": "보라매",
+      "stationName": "보라매역",
+      "lat": 37.499916,
+      "lng": 126.920112,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "신림선"
+      ],
+      "sourceCodes": {
+        "7": "744"
+      },
+      "aliases": []
+    },
+    "s7_745": {
+      "name": "신풍",
+      "stationName": "신풍역",
+      "lat": 37.500107,
+      "lng": 126.909806,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "745"
+      },
+      "aliases": []
+    },
+    "s7_747": {
+      "name": "남구로",
+      "stationName": "남구로역",
+      "lat": 37.486181,
+      "lng": 126.887372,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "747"
+      },
+      "aliases": []
+    },
+    "s7_749": {
+      "name": "철산",
+      "stationName": "철산역",
+      "lat": 37.47616,
+      "lng": 126.868217,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "749"
+      },
+      "aliases": []
+    },
+    "s7_750": {
+      "name": "광명사거리",
+      "stationName": "광명사거리역",
+      "lat": 37.47927,
+      "lng": 126.854854,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "750"
+      },
+      "aliases": []
+    },
+    "s7_751": {
+      "name": "천왕",
+      "stationName": "천왕역",
+      "lat": 37.486699,
+      "lng": 126.838684,
+      "lineIds": [
+        "7"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "7": "751"
+      },
+      "aliases": []
+    },
+    "s8_809": {
+      "name": "암사역사공원",
+      "stationName": "암사역사공원역",
+      "lat": 37.55695,
+      "lng": 127.13702,
+      "lineIds": [
+        "8"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "8": "809"
+      },
+      "aliases": []
+    },
+    "s8_810": {
+      "name": "암사",
+      "stationName": "암사역",
+      "lat": 37.550127,
+      "lng": 127.127521,
+      "lineIds": [
+        "8"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "8": "810"
+      },
+      "aliases": []
+    },
+    "s8_812": {
+      "name": "강동구청",
+      "stationName": "강동구청역",
+      "lat": 37.530348,
+      "lng": 127.120461,
+      "lineIds": [
+        "8"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "8": "812"
+      },
+      "aliases": []
+    },
+    "s8_813": {
+      "name": "몽촌토성",
+      "stationName": "몽촌토성역",
+      "lat": 37.517692,
+      "lng": 127.11274,
+      "lineIds": [
+        "8"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "8": "813"
+      },
+      "aliases": []
+    },
+    "s8_815": {
+      "name": "석촌",
+      "stationName": "석촌역",
+      "lat": 37.505396,
+      "lng": 127.106995,
+      "lineIds": [
+        "8",
+        "9"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "8": "815",
+        "9": "933"
+      },
+      "aliases": []
+    },
+    "s8_816": {
+      "name": "송파",
+      "stationName": "송파역",
+      "lat": 37.49978,
+      "lng": 127.11212,
+      "lineIds": [
+        "8"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "8": "816"
+      },
+      "aliases": []
+    },
+    "s8_818": {
+      "name": "문정",
+      "stationName": "문정역",
+      "lat": 37.485931,
+      "lng": 127.122473,
+      "lineIds": [
+        "8"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "8": "818"
+      },
+      "aliases": []
+    },
+    "s8_819": {
+      "name": "장지",
+      "stationName": "장지역",
+      "lat": 37.478609,
+      "lng": 127.126229,
+      "lineIds": [
+        "8"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "8": "819"
+      },
+      "aliases": []
+    },
+    "s8_820": {
+      "name": "복정",
+      "stationName": "복정역",
+      "lat": 37.471016,
+      "lng": 127.126746,
+      "lineIds": [
+        "8",
+        "B"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "8": "820",
+        "B": "K222"
+      },
+      "aliases": []
+    },
+    "s9_901": {
+      "name": "개화",
+      "stationName": "개화역",
+      "lat": 37.578608,
+      "lng": 126.798153,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "901"
+      },
+      "aliases": []
+    },
+    "s9_903": {
+      "name": "공항시장",
+      "stationName": "공항시장역",
+      "lat": 37.563726,
+      "lng": 126.810678,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "903"
+      },
+      "aliases": []
+    },
+    "s9_904": {
+      "name": "신방화",
+      "stationName": "신방화역",
+      "lat": 37.567532,
+      "lng": 126.816601,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "904"
+      },
+      "aliases": []
+    },
+    "s9_905": {
+      "name": "마곡나루",
+      "stationName": "마곡나루역",
+      "lat": 37.566778,
+      "lng": 126.82731,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "공항철도"
+      ],
+      "sourceCodes": {
+        "9": "905"
+      },
+      "aliases": []
+    },
+    "s9_906": {
+      "name": "양천향교",
+      "stationName": "양천향교역",
+      "lat": 37.568381,
+      "lng": 126.841333,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "906"
+      },
+      "aliases": []
+    },
+    "s9_907": {
+      "name": "가양",
+      "stationName": "가양역",
+      "lat": 37.561391,
+      "lng": 126.854456,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "907"
+      },
+      "aliases": []
+    },
+    "s9_908": {
+      "name": "증미",
+      "stationName": "증미역",
+      "lat": 37.557402,
+      "lng": 126.861939,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "908"
+      },
+      "aliases": []
+    },
+    "s9_909": {
+      "name": "등촌",
+      "stationName": "등촌역",
+      "lat": 37.550632,
+      "lng": 126.865689,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "909"
+      },
+      "aliases": []
+    },
+    "s9_910": {
+      "name": "염창",
+      "stationName": "염창역",
+      "lat": 37.546936,
+      "lng": 126.874916,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "910"
+      },
+      "aliases": []
+    },
+    "s9_911": {
+      "name": "신목동",
+      "stationName": "신목동역",
+      "lat": 37.544277,
+      "lng": 126.88308,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "911"
+      },
+      "aliases": []
+    },
+    "s9_912": {
+      "name": "선유도",
+      "stationName": "선유도역",
+      "lat": 37.53802,
+      "lng": 126.893525,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "912"
+      },
+      "aliases": []
+    },
+    "s9_914": {
+      "name": "국회의사당",
+      "stationName": "국회의사당역",
+      "lat": 37.528247,
+      "lng": 126.917821,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "914"
+      },
+      "aliases": []
+    },
+    "s9_916": {
+      "name": "샛강",
+      "stationName": "샛강역",
+      "lat": 37.517274,
+      "lng": 126.928422,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "신림선"
+      ],
+      "sourceCodes": {
+        "9": "916"
+      },
+      "aliases": []
+    },
+    "s9_918": {
+      "name": "노들",
+      "stationName": "노들역",
+      "lat": 37.512887,
+      "lng": 126.953222,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "918"
+      },
+      "aliases": []
+    },
+    "s9_919": {
+      "name": "흑석",
+      "stationName": "흑석역",
+      "lat": 37.50877,
+      "lng": 126.963708,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "919"
+      },
+      "aliases": []
+    },
+    "s9_921": {
+      "name": "구반포",
+      "stationName": "구반포역",
+      "lat": 37.501364,
+      "lng": 126.987332,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "921"
+      },
+      "aliases": []
+    },
+    "s9_922": {
+      "name": "신반포",
+      "stationName": "신반포역",
+      "lat": 37.503415,
+      "lng": 126.995925,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "922"
+      },
+      "aliases": []
+    },
+    "s9_924": {
+      "name": "사평",
+      "stationName": "사평역",
+      "lat": 37.504206,
+      "lng": 127.015259,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "924"
+      },
+      "aliases": []
+    },
+    "s9_925": {
+      "name": "신논현",
+      "stationName": "신논현역",
+      "lat": 37.504598,
+      "lng": 127.02506,
+      "lineIds": [
+        "9",
+        "S"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "925"
+      },
+      "aliases": []
+    },
+    "s9_926": {
+      "name": "언주",
+      "stationName": "언주역",
+      "lat": 37.507287,
+      "lng": 127.033868,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "926"
+      },
+      "aliases": []
+    },
+    "s9_927": {
+      "name": "선정릉",
+      "stationName": "선정릉역",
+      "lat": 37.51098,
+      "lng": 127.043593,
+      "lineIds": [
+        "9",
+        "B"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "927",
+        "B": "K214"
+      },
+      "aliases": []
+    },
+    "s9_928": {
+      "name": "삼성중앙",
+      "stationName": "삼성중앙역",
+      "lat": 37.513011,
+      "lng": 127.053282,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "928"
+      },
+      "aliases": []
+    },
+    "s9_929": {
+      "name": "봉은사",
+      "stationName": "봉은사역",
+      "lat": 37.514219,
+      "lng": 127.060245,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "929"
+      },
+      "aliases": []
+    },
+    "s9_931": {
+      "name": "삼전",
+      "stationName": "삼전역",
+      "lat": 37.504738,
+      "lng": 127.088025,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "931"
+      },
+      "aliases": []
+    },
+    "s9_932": {
+      "name": "석촌고분",
+      "stationName": "석촌고분역",
+      "lat": 37.502558,
+      "lng": 127.097033,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "932"
+      },
+      "aliases": []
+    },
+    "s9_934": {
+      "name": "송파나루",
+      "stationName": "송파나루역",
+      "lat": 37.51041,
+      "lng": 127.112195,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "934"
+      },
+      "aliases": []
+    },
+    "s9_935": {
+      "name": "한성백제",
+      "stationName": "한성백제역",
+      "lat": 37.516404,
+      "lng": 127.116503,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "935"
+      },
+      "aliases": []
+    },
+    "s9_937": {
+      "name": "둔촌오륜",
+      "stationName": "둔촌오륜역",
+      "lat": 37.519683,
+      "lng": 127.138397,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "937"
+      },
+      "aliases": []
+    },
+    "s9_938": {
+      "name": "중앙보훈병원",
+      "stationName": "중앙보훈병원역",
+      "lat": 37.528807,
+      "lng": 127.148488,
+      "lineIds": [
+        "9"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "9": "938"
+      },
+      "aliases": []
+    },
+    "gj_hangukhanggongdae": {
+      "name": "한국항공대",
+      "stationName": "한국항공대역",
+      "lat": 37.60289592260483,
+      "lng": 126.86823924014628,
+      "lineIds": [
+        "K"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {},
+      "aliases": []
+    },
+    "gj_susaek": {
+      "name": "수색",
+      "stationName": "수색역",
+      "lat": 37.580842,
+      "lng": 126.895611,
+      "lineIds": [
+        "K"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {},
+      "aliases": []
+    },
+    "gj_gajwa": {
+      "name": "가좌",
+      "stationName": "가좌역",
+      "lat": 37.568491,
+      "lng": 126.915487,
+      "lineIds": [
+        "K"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {},
+      "aliases": []
+    },
+    "gj_seogangdae": {
+      "name": "서강대",
+      "stationName": "서강대역",
+      "lat": 37.551881,
+      "lng": 126.935711,
+      "lineIds": [
+        "K"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {},
+      "aliases": []
+    },
+    "gj_seobinggo": {
+      "name": "서빙고",
+      "stationName": "서빙고역",
+      "lat": 37.519594,
+      "lng": 126.988537,
+      "lineIds": [
+        "K"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {},
+      "aliases": []
+    },
+    "gj_hannam": {
+      "name": "한남",
+      "stationName": "한남역",
+      "lat": 37.52943,
+      "lng": 127.009169,
+      "lineIds": [
+        "K"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {},
+      "aliases": []
+    },
+    "gj_eungbong": {
+      "name": "응봉",
+      "stationName": "응봉역",
+      "lat": 37.549946,
+      "lng": 127.034538,
+      "lineIds": [
+        "K"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {},
+      "aliases": []
+    },
+    "gj_jungnang": {
+      "name": "중랑",
+      "stationName": "중랑역",
+      "lat": 37.594917,
+      "lng": 127.076116,
+      "lineIds": [
+        "K"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "경춘선"
+      ],
+      "sourceCodes": {},
+      "aliases": []
+    },
+    "gj_mangu": {
+      "name": "망우",
+      "stationName": "망우역",
+      "lat": 37.59955,
+      "lng": 127.091909,
+      "lineIds": [
+        "K"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "경춘선"
+      ],
+      "sourceCodes": {},
+      "aliases": []
+    },
+    "gj_yangwon": {
+      "name": "양원",
+      "stationName": "양원역",
+      "lat": 37.606596,
+      "lng": 127.107906,
+      "lineIds": [
+        "K"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {},
+      "aliases": []
+    },
+    "gj_guri": {
+      "name": "구리",
+      "stationName": "구리역",
+      "lat": 37.603392,
+      "lng": 127.143869,
+      "lineIds": [
+        "K"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "8호선"
+      ],
+      "sourceCodes": {},
+      "aliases": []
+    },
+    "gj_sinchon_gyeongui": {
+      "name": "신촌(경의선)",
+      "stationName": "신촌(경의선)역",
+      "lat": 37.55972,
+      "lng": 126.94306,
+      "lineIds": [
+        "K"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {},
+      "aliases": [
+        "신촌역"
+      ]
+    },
+    "sb_k211": {
+      "name": "서울숲",
+      "stationName": "서울숲역",
+      "lat": 37.543646,
+      "lng": 127.044746,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K211"
+      },
+      "aliases": []
+    },
+    "sb_k212": {
+      "name": "압구정로데오",
+      "stationName": "압구정로데오역",
+      "lat": 37.527519,
+      "lng": 127.040601,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K212"
+      },
+      "aliases": []
+    },
+    "sb_k216": {
+      "name": "한티",
+      "stationName": "한티역",
+      "lat": 37.496286,
+      "lng": 127.05291,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K216"
+      },
+      "aliases": []
+    },
+    "sb_k218": {
+      "name": "구룡",
+      "stationName": "구룡역",
+      "lat": 37.487027,
+      "lng": 127.059493,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K218"
+      },
+      "aliases": []
+    },
+    "sb_k219": {
+      "name": "개포동",
+      "stationName": "개포동역",
+      "lat": 37.489139,
+      "lng": 127.066121,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K219"
+      },
+      "aliases": []
+    },
+    "sb_k220": {
+      "name": "대모산입구",
+      "stationName": "대모산입구역",
+      "lat": 37.49155,
+      "lng": 127.07307,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K220"
+      },
+      "aliases": []
+    },
+    "sb_k223": {
+      "name": "가천대",
+      "stationName": "가천대역",
+      "lat": 37.448563,
+      "lng": 127.126696,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K223"
+      },
+      "aliases": []
+    },
+    "sb_k224": {
+      "name": "태평",
+      "stationName": "태평역",
+      "lat": 37.439789,
+      "lng": 127.127748,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K224"
+      },
+      "aliases": []
+    },
+    "sb_k225": {
+      "name": "모란",
+      "stationName": "모란역",
+      "lat": 37.432057,
+      "lng": 127.129131,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "8호선"
+      ],
+      "sourceCodes": {
+        "B": "K225"
+      },
+      "aliases": []
+    },
+    "sb_k226": {
+      "name": "야탑",
+      "stationName": "야탑역",
+      "lat": 37.411374,
+      "lng": 127.128743,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K226"
+      },
+      "aliases": []
+    },
+    "sb_k227": {
+      "name": "이매",
+      "stationName": "이매역",
+      "lat": 37.396208,
+      "lng": 127.128288,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "경강선"
+      ],
+      "sourceCodes": {
+        "B": "K227"
+      },
+      "aliases": []
+    },
+    "sb_k228": {
+      "name": "서현",
+      "stationName": "서현역",
+      "lat": 37.385015,
+      "lng": 127.123431,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K228"
+      },
+      "aliases": []
+    },
+    "sb_k229": {
+      "name": "수내",
+      "stationName": "수내역",
+      "lat": 37.378469,
+      "lng": 127.114289,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K229"
+      },
+      "aliases": []
+    },
+    "sb_k230": {
+      "name": "정자",
+      "stationName": "정자역",
+      "lat": 37.366174,
+      "lng": 127.108097,
+      "lineIds": [
+        "B",
+        "S"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K230"
+      },
+      "aliases": []
+    },
+    "sb_k231": {
+      "name": "미금",
+      "stationName": "미금역",
+      "lat": 37.350073,
+      "lng": 127.109009,
+      "lineIds": [
+        "B",
+        "S"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": true,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K231"
+      },
+      "aliases": []
+    },
+    "sb_k232": {
+      "name": "오리",
+      "stationName": "오리역",
+      "lat": 37.339831,
+      "lng": 127.108949,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K232"
+      },
+      "aliases": []
+    },
+    "sb_k233": {
+      "name": "죽전",
+      "stationName": "죽전역",
+      "lat": 37.324377,
+      "lng": 127.107505,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K233"
+      },
+      "aliases": []
+    },
+    "sb_k234": {
+      "name": "보정",
+      "stationName": "보정역",
+      "lat": 37.312775,
+      "lng": 127.108337,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K234"
+      },
+      "aliases": []
+    },
+    "sb_k235": {
+      "name": "구성",
+      "stationName": "구성역",
+      "lat": 37.298977,
+      "lng": 127.105696,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "광역급행철도A"
+      ],
+      "sourceCodes": {
+        "B": "K235"
+      },
+      "aliases": []
+    },
+    "sb_k236": {
+      "name": "신갈",
+      "stationName": "신갈역",
+      "lat": 37.286148,
+      "lng": 127.111285,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K236"
+      },
+      "aliases": []
+    },
+    "sb_k237": {
+      "name": "기흥",
+      "stationName": "기흥역",
+      "lat": 37.275497,
+      "lng": 127.115955,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "용인에버라인"
+      ],
+      "sourceCodes": {
+        "B": "K237"
+      },
+      "aliases": []
+    },
+    "sb_k238": {
+      "name": "상갈",
+      "stationName": "상갈역",
+      "lat": 37.261812,
+      "lng": 127.108737,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K238"
+      },
+      "aliases": []
+    },
+    "sb_k239": {
+      "name": "청명",
+      "stationName": "청명역",
+      "lat": 37.25954,
+      "lng": 127.078969,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K239"
+      },
+      "aliases": []
+    },
+    "sb_k240": {
+      "name": "영통",
+      "stationName": "영통역",
+      "lat": 37.251504,
+      "lng": 127.071332,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K240"
+      },
+      "aliases": []
+    },
+    "sb_k241": {
+      "name": "망포",
+      "stationName": "망포역",
+      "lat": 37.245838,
+      "lng": 127.056855,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K241"
+      },
+      "aliases": []
+    },
+    "sb_k242": {
+      "name": "매탄권선",
+      "stationName": "매탄권선역",
+      "lat": 37.252506,
+      "lng": 127.040809,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K242"
+      },
+      "aliases": []
+    },
+    "sb_k243": {
+      "name": "수원시청",
+      "stationName": "수원시청역",
+      "lat": 37.261923,
+      "lng": 127.030857,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K243"
+      },
+      "aliases": []
+    },
+    "sb_k244": {
+      "name": "매교",
+      "stationName": "매교역",
+      "lat": 37.265515,
+      "lng": 127.015901,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K244"
+      },
+      "aliases": []
+    },
+    "sb_k245": {
+      "name": "수원",
+      "stationName": "수원역",
+      "lat": 37.26579,
+      "lng": 127.000095,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "1호선"
+      ],
+      "sourceCodes": {
+        "B": "K245"
+      },
+      "aliases": []
+    },
+    "sb_k246": {
+      "name": "고색",
+      "stationName": "고색역",
+      "lat": 37.249772,
+      "lng": 126.980573,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K246"
+      },
+      "aliases": []
+    },
+    "sb_k247": {
+      "name": "오목천",
+      "stationName": "오목천역",
+      "lat": 37.24336,
+      "lng": 126.963903,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K247"
+      },
+      "aliases": []
+    },
+    "sb_k248": {
+      "name": "어천",
+      "stationName": "어천역",
+      "lat": 37.250088,
+      "lng": 126.9088,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K248"
+      },
+      "aliases": []
+    },
+    "sb_k249": {
+      "name": "야목",
+      "stationName": "야목역",
+      "lat": 37.261423,
+      "lng": 126.883773,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K249"
+      },
+      "aliases": []
+    },
+    "sb_k250": {
+      "name": "사리",
+      "stationName": "사리역",
+      "lat": 37.290641,
+      "lng": 126.857104,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K250"
+      },
+      "aliases": []
+    },
+    "sb_k251": {
+      "name": "한대앞",
+      "stationName": "한대앞역",
+      "lat": 37.310207,
+      "lng": 126.853246,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "4호선"
+      ],
+      "sourceCodes": {
+        "B": "K251"
+      },
+      "aliases": []
+    },
+    "sb_k252": {
+      "name": "중앙",
+      "stationName": "중앙역",
+      "lat": 37.31604,
+      "lng": 126.837959,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "4호선"
+      ],
+      "sourceCodes": {
+        "B": "K252"
+      },
+      "aliases": []
+    },
+    "sb_k253": {
+      "name": "고잔",
+      "stationName": "고잔역",
+      "lat": 37.316825,
+      "lng": 126.82247,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "4호선"
+      ],
+      "sourceCodes": {
+        "B": "K253"
+      },
+      "aliases": []
+    },
+    "sb_k254": {
+      "name": "초지",
+      "stationName": "초지역",
+      "lat": 37.320896,
+      "lng": 126.805461,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "4호선",
+        "서해선"
+      ],
+      "sourceCodes": {
+        "B": "K254"
+      },
+      "aliases": []
+    },
+    "sb_k255": {
+      "name": "안산",
+      "stationName": "안산역",
+      "lat": 37.327401,
+      "lng": 126.788019,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "4호선"
+      ],
+      "sourceCodes": {
+        "B": "K255"
+      },
+      "aliases": []
+    },
+    "sb_k256": {
+      "name": "능길",
+      "stationName": "능길역",
+      "lat": 37.337892,
+      "lng": 126.766558,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "4호선"
+      ],
+      "sourceCodes": {
+        "B": "K256"
+      },
+      "aliases": [
+        "신길온천"
+      ]
+    },
+    "sb_k257": {
+      "name": "정왕",
+      "stationName": "정왕역",
+      "lat": 37.352013,
+      "lng": 126.742261,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "4호선"
+      ],
+      "sourceCodes": {
+        "B": "K257"
+      },
+      "aliases": []
+    },
+    "sb_k258": {
+      "name": "오이도",
+      "stationName": "오이도역",
+      "lat": 37.362929,
+      "lng": 126.738923,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "4호선"
+      ],
+      "sourceCodes": {
+        "B": "K258"
+      },
+      "aliases": []
+    },
+    "sb_k259": {
+      "name": "달월",
+      "stationName": "달월역",
+      "lat": 37.380027,
+      "lng": 126.745403,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K259"
+      },
+      "aliases": []
+    },
+    "sb_k260": {
+      "name": "월곶",
+      "stationName": "월곶역",
+      "lat": 37.391821,
+      "lng": 126.742708,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K260"
+      },
+      "aliases": []
+    },
+    "sb_k261": {
+      "name": "소래포구",
+      "stationName": "소래포구역",
+      "lat": 37.40094,
+      "lng": 126.733492,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K261"
+      },
+      "aliases": []
+    },
+    "sb_k262": {
+      "name": "인천논현",
+      "stationName": "인천논현역",
+      "lat": 37.400659,
+      "lng": 126.722452,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K262"
+      },
+      "aliases": []
+    },
+    "sb_k263": {
+      "name": "호구포",
+      "stationName": "호구포역",
+      "lat": 37.401642,
+      "lng": 126.708683,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K263"
+      },
+      "aliases": []
+    },
+    "sb_k264": {
+      "name": "남동인더스파크",
+      "stationName": "남동인더스파크역",
+      "lat": 37.407742,
+      "lng": 126.695227,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K264"
+      },
+      "aliases": []
+    },
+    "sb_k265": {
+      "name": "원인재",
+      "stationName": "원인재역",
+      "lat": 37.413212,
+      "lng": 126.686458,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "인천 1호선"
+      ],
+      "sourceCodes": {
+        "B": "K265"
+      },
+      "aliases": []
+    },
+    "sb_k266": {
+      "name": "연수",
+      "stationName": "연수역",
+      "lat": 37.417927,
+      "lng": 126.678747,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K266"
+      },
+      "aliases": []
+    },
+    "sb_k267": {
+      "name": "송도",
+      "stationName": "송도역",
+      "lat": 37.429962,
+      "lng": 126.654676,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K267"
+      },
+      "aliases": []
+    },
+    "sb_k269": {
+      "name": "인하대",
+      "stationName": "인하대역",
+      "lat": 37.448339,
+      "lng": 126.649763,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K269"
+      },
+      "aliases": []
+    },
+    "sb_k270": {
+      "name": "숭의",
+      "stationName": "숭의역",
+      "lat": 37.4608,
+      "lng": 126.638411,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K270"
+      },
+      "aliases": []
+    },
+    "sb_k271": {
+      "name": "신포",
+      "stationName": "신포역",
+      "lat": 37.468455,
+      "lng": 126.624534,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {
+        "B": "K271"
+      },
+      "aliases": []
+    },
+    "sb_k272": {
+      "name": "인천",
+      "stationName": "인천역",
+      "lat": 37.476469,
+      "lng": 126.617398,
+      "lineIds": [
+        "B"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "1호선"
+      ],
+      "sourceCodes": {
+        "B": "K272"
+      },
+      "aliases": []
+    },
+    "sd_yangjae_forest": {
+      "name": "양재시민의숲",
+      "stationName": "양재시민의숲역",
+      "lat": 37.470023,
+      "lng": 127.03842,
+      "lineIds": [
+        "S"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {},
+      "aliases": []
+    },
+    "sd_cheonggyesan": {
+      "name": "청계산입구",
+      "stationName": "청계산입구역",
+      "lat": 37.447211,
+      "lng": 127.055664,
+      "lineIds": [
+        "S"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {},
+      "aliases": []
+    },
+    "sd_pangyo": {
+      "name": "판교",
+      "stationName": "판교역",
+      "lat": 37.394761,
+      "lng": 127.111217,
+      "lineIds": [
+        "S"
+      ],
+      "isTransfer": true,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [
+        "경강선"
+      ],
+      "sourceCodes": {},
+      "aliases": []
+    },
+    "sd_dongcheon": {
+      "name": "동천",
+      "stationName": "동천역",
+      "lat": 37.337928,
+      "lng": 127.102976,
+      "lineIds": [
+        "S"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {},
+      "aliases": []
+    },
+    "sd_suji": {
+      "name": "수지구청",
+      "stationName": "수지구청역",
+      "lat": 37.322702,
+      "lng": 127.095026,
+      "lineIds": [
+        "S"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {},
+      "aliases": []
+    },
+    "sd_seongbok": {
+      "name": "성복",
+      "stationName": "성복역",
+      "lat": 37.313335,
+      "lng": 127.0801,
+      "lineIds": [
+        "S"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {},
+      "aliases": []
+    },
+    "sd_sanghyeon": {
+      "name": "상현",
+      "stationName": "상현역",
+      "lat": 37.297664,
+      "lng": 127.069342,
+      "lineIds": [
+        "S"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {},
+      "aliases": []
+    },
+    "sd_gwanggyojungang": {
+      "name": "광교중앙",
+      "stationName": "광교중앙역",
+      "lat": 37.288617,
+      "lng": 127.051478,
+      "lineIds": [
+        "S"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {},
+      "aliases": []
+    },
+    "sd_gwanggyo": {
+      "name": "광교",
+      "stationName": "광교역",
+      "lat": 37.30211,
+      "lng": 127.044483,
+      "lineIds": [
+        "S"
+      ],
+      "isTransfer": false,
+      "isTransferWithinNetwork": false,
+      "knownOtherTransferLines": [],
+      "sourceCodes": {},
+      "aliases": []
+    }
+  },
+  "transfers": [
+    {
+      "stationId": "changdong",
+      "betweenLineIds": [
+        "1",
+        "4"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "cheongnyangni",
+      "betweenLineIds": [
+        "1",
+        "B"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "cheongnyangni",
+      "betweenLineIds": [
+        "1",
+        "K"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "cheongnyangni",
+      "betweenLineIds": [
+        "B",
+        "K"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "dongdaemun",
+      "betweenLineIds": [
+        "1",
+        "4"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "dongmyoap",
+      "betweenLineIds": [
+        "1",
+        "6"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "hoegi",
+      "betweenLineIds": [
+        "1",
+        "K"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "nowon",
+      "betweenLineIds": [
+        "4",
+        "7"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s1_113",
+      "betweenLineIds": [
+        "1",
+        "7"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s1_130",
+      "betweenLineIds": [
+        "1",
+        "3"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s1_130",
+      "betweenLineIds": [
+        "1",
+        "5"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s1_130",
+      "betweenLineIds": [
+        "3",
+        "5"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s1_132",
+      "betweenLineIds": [
+        "1",
+        "2"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s1_133",
+      "betweenLineIds": [
+        "1",
+        "4"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s1_133",
+      "betweenLineIds": [
+        "1",
+        "K"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s1_133",
+      "betweenLineIds": [
+        "4",
+        "K"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s1_135",
+      "betweenLineIds": [
+        "1",
+        "K"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s1_136",
+      "betweenLineIds": [
+        "1",
+        "9"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s1_138",
+      "betweenLineIds": [
+        "1",
+        "5"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s1_140",
+      "betweenLineIds": [
+        "1",
+        "2"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s1_145",
+      "betweenLineIds": [
+        "1",
+        "7"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s1_P142",
+      "betweenLineIds": [
+        "1",
+        "7"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_203",
+      "betweenLineIds": [
+        "2",
+        "3"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_204",
+      "betweenLineIds": [
+        "2",
+        "5"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_205",
+      "betweenLineIds": [
+        "2",
+        "4"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_205",
+      "betweenLineIds": [
+        "2",
+        "5"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_205",
+      "betweenLineIds": [
+        "4",
+        "5"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_206",
+      "betweenLineIds": [
+        "2",
+        "6"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_208",
+      "betweenLineIds": [
+        "2",
+        "5"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_208",
+      "betweenLineIds": [
+        "2",
+        "B"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_208",
+      "betweenLineIds": [
+        "2",
+        "K"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_208",
+      "betweenLineIds": [
+        "5",
+        "B"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_208",
+      "betweenLineIds": [
+        "5",
+        "K"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_208",
+      "betweenLineIds": [
+        "B",
+        "K"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_212",
+      "betweenLineIds": [
+        "2",
+        "7"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_216",
+      "betweenLineIds": [
+        "2",
+        "8"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_218",
+      "betweenLineIds": [
+        "2",
+        "9"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_220",
+      "betweenLineIds": [
+        "2",
+        "B"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_222",
+      "betweenLineIds": [
+        "2",
+        "S"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_223",
+      "betweenLineIds": [
+        "2",
+        "3"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_226",
+      "betweenLineIds": [
+        "2",
+        "4"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_233",
+      "betweenLineIds": [
+        "2",
+        "7"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_236",
+      "betweenLineIds": [
+        "2",
+        "5"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_237",
+      "betweenLineIds": [
+        "2",
+        "9"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_238",
+      "betweenLineIds": [
+        "2",
+        "6"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_239",
+      "betweenLineIds": [
+        "2",
+        "K"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_loop_243",
+      "betweenLineIds": [
+        "2",
+        "5"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s2_sinjeong_234_4",
+      "betweenLineIds": [
+        "2",
+        "5"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s3_321",
+      "betweenLineIds": [
+        "3",
+        "6"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s3_322",
+      "betweenLineIds": [
+        "3",
+        "6"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s3_331",
+      "betweenLineIds": [
+        "3",
+        "4"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s3_333",
+      "betweenLineIds": [
+        "3",
+        "6"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s3_335",
+      "betweenLineIds": [
+        "3",
+        "K"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s3_337",
+      "betweenLineIds": [
+        "3",
+        "S"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s3_339",
+      "betweenLineIds": [
+        "3",
+        "7"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s3_339",
+      "betweenLineIds": [
+        "3",
+        "9"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s3_339",
+      "betweenLineIds": [
+        "7",
+        "9"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s3_342",
+      "betweenLineIds": [
+        "3",
+        "S"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s3_344",
+      "betweenLineIds": [
+        "3",
+        "B"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s3_349",
+      "betweenLineIds": [
+        "3",
+        "B"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s3_350",
+      "betweenLineIds": [
+        "3",
+        "8"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s3_352",
+      "betweenLineIds": [
+        "3",
+        "5"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s4_428",
+      "betweenLineIds": [
+        "4",
+        "6"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s4_430",
+      "betweenLineIds": [
+        "4",
+        "K"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s4_431",
+      "betweenLineIds": [
+        "4",
+        "9"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s4_432",
+      "betweenLineIds": [
+        "4",
+        "7"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s5_512",
+      "betweenLineIds": [
+        "5",
+        "9"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s5_526",
+      "betweenLineIds": [
+        "5",
+        "9"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s5_529",
+      "betweenLineIds": [
+        "5",
+        "6"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s5_529",
+      "betweenLineIds": [
+        "5",
+        "K"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s5_529",
+      "betweenLineIds": [
+        "6",
+        "K"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s5_537",
+      "betweenLineIds": [
+        "5",
+        "6"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s5_544",
+      "betweenLineIds": [
+        "5",
+        "7"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s5_547",
+      "betweenLineIds": [
+        "5",
+        "8"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s5_P550",
+      "betweenLineIds": [
+        "5",
+        "9"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s6_618",
+      "betweenLineIds": [
+        "6",
+        "K"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s6_627",
+      "betweenLineIds": [
+        "6",
+        "K"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s7_732",
+      "betweenLineIds": [
+        "7",
+        "B"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s7_734",
+      "betweenLineIds": [
+        "7",
+        "S"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s8_815",
+      "betweenLineIds": [
+        "8",
+        "9"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s8_820",
+      "betweenLineIds": [
+        "8",
+        "B"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s9_925",
+      "betweenLineIds": [
+        "9",
+        "S"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "s9_927",
+      "betweenLineIds": [
+        "9",
+        "B"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "sangbong",
+      "betweenLineIds": [
+        "7",
+        "K"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "sb_k230",
+      "betweenLineIds": [
+        "B",
+        "S"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "sb_k231",
+      "betweenLineIds": [
+        "B",
+        "S"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "seokgye",
+      "betweenLineIds": [
+        "1",
+        "6"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "sinseoldong",
+      "betweenLineIds": [
+        "1",
+        "2"
+      ],
+      "transferMinutes": null
+    },
+    {
+      "stationId": "taereungipgu",
+      "betweenLineIds": [
+        "6",
+        "7"
+      ],
+      "transferMinutes": null
+    }
+  ]
+}

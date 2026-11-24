@@ -17,7 +17,6 @@ const nodeMarkers = [];
 const nodeLabels = [];
 const graphEdgeLines = []; // 게임 간선 (실제 선로가 아닌 게임 연결 관계)
 const nodePositions = new Map();
-const stationCoordinateCache = new Map();
 let stationRequest = 0;
 let mapRequest = 0;
 let renderedSessionId = null;
@@ -131,46 +130,12 @@ function drawRoute(index) {
   });
 }
 
-// Places: 이름이 실제 지하철역 검색 결과와 일치할 때만 좌표를 사용한다.
-async function findStationPosition(places, stationName) {
-  if (stationCoordinateCache.has(stationName)) {
-    return stationCoordinateCache.get(stationName);
-  }
-  const coordinate = await new Promise((resolve) => {
-    places.keywordSearch(stationName, (data, status) => {
-      if (status !== kakao.maps.services.Status.OK) {
-        console.warn('역 검색 실패:', stationName, status);
-        resolve(null);
-        return;
-      }
-      const normalize = (name) => String(name).replace(/\s+/g, '');
-      const station = data.find((place) =>
-        place.category_group_code === 'SW8' &&
-        normalize(place.place_name).startsWith(normalize(stationName))
-      );
-      if (!station) {
-        console.warn('일치하는 지하철역 없음:', stationName, data.map((p) => p.place_name));
-        resolve(null);
-        return;
-      }
-      const lat = Number(station.y), lng = Number(station.x);
-      resolve(Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null);
-    }, { category_group_code: 'SW8' });
-  });
-  if (coordinate) stationCoordinateCache.set(stationName, coordinate);
-  return coordinate;
-}
-
 async function showGameNodes() {
   const request = ++stationRequest;
   if (!S || !Array.isArray(S.nodes)) {
     notify('게임을 먼저 시작해 주세요.');
     return;
   }
-  if (!kakao.maps.services?.Places) {
-    throw new Error('카카오 장소 검색 라이브러리를 불러오지 못했습니다.');
-  }
-
   const sessionId = S.sessionId;
   renderedSessionId = sessionId;
   clearMapObjects(routeLines);
@@ -181,18 +146,17 @@ async function showGameNodes() {
   nodePositions.clear();
   routeOptions.classList.add('hidden');
 
-  const places = new kakao.maps.services.Places();
-  const results = await Promise.all(S.nodes.map(async (node) => ({
+  const results = S.nodes.map(node => ({
     node,
-    coordinate: await findStationPosition(places, node.stationName || node.name),
-  })));
+    coordinate: Number.isFinite(node.lat) && Number.isFinite(node.lng) ? node : null,
+  }));
 
   if (request !== stationRequest || S?.sessionId !== sessionId ||
       kakaoMapEl.classList.contains('hidden')) return;
 
   const found = results.filter(({ coordinate }) => coordinate !== null);
   if (!found.length) {
-    notify('검색된 지하철역이 없습니다.');
+    notify('저장된 역 좌표가 없습니다.');
     return;
   }
 
@@ -233,7 +197,7 @@ async function showGameNodes() {
 
   const missing = S.nodes.length - found.length;
   notify(`실제 지도에 ${found.length}개 노드 표시 완료` +
-    (missing ? ` · ${missing}개 위치 검색 실패 (기존 게임 지도에서는 이동 가능)` : ''));
+    (missing ? ` · ${missing}개 역 좌표 없음 (기존 게임 지도에서는 이동 가능)` : ''));
 }
 
 // 카카오맵에서 인접 노드를 선택해 기존 SVG 지도 클릭 흐름을 재사용한다.
@@ -355,48 +319,6 @@ window.testTransitEdge = async function (edgeId = 0) {
     console.error('유효한 출발역 또는 도착역 정보가 없습니다.');
     return null;
   }
-  console.log(`간선 ${edge.id}: ${start} → ${end}`);
-  console.log('기존 게임 가중치:', edge.opts);
-  try {
-    const params = new URLSearchParams({ start, end });
-    const response = await fetch(`/api/kakao/transit?${params}`);
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
-    if (!Array.isArray(data.routes) || !data.routes.length) throw new Error('대중교통 경로 없음');
-    console.table(data.routes.map((route, i) => ({
-      경로: i + 1, 소요시간: `${route.totalMinutes}분`, 교통비: `${route.fare}원`,
-      환승횟수: route.transfers,
-      이동수단: [...new Set(route.steps.map((step) => step.mode))].join(', '),
-    })));
-    const fastest = data.routes.reduce((best, route) =>
-      route.totalMinutes < best.totalMinutes ? route : best);
-    transitData = data;
-    clearMapObjects(routeLines);
-    const bounds = new kakao.maps.LatLngBounds();
-    const colors = { subway: '#3366CC', bus: '#E66A4E', walk: '#548C62' };
-    fastest.steps.forEach((step) => {
-      if (!Array.isArray(step.points) || step.points.length < 2) return;
-      const path = step.points.map(([x, y]) => {
-        const point = new kakao.maps.LatLng(y, x);
-        bounds.extend(point);
-        return point;
-      });
-      const line = new kakao.maps.Polyline({
-        path, strokeWeight: 6, strokeColor: colors[step.mode] || '#888888', strokeOpacity: 0.9,
-      });
-      line.setMap(kakaoMapInstance);
-      routeLines.push(line);
-    });
-    bounds.extend(new kakao.maps.LatLng(data.origin.y, data.origin.x));
-    bounds.extend(new kakao.maps.LatLng(data.destination.y, data.destination.x));
-    kakaoMapInstance.relayout();
-    kakaoMapInstance.setBounds(bounds);
-    console.log('가장 빠른 경로:', fastest);
-    notify(`${start} → ${end}: 실제 예상 ${fastest.totalMinutes}분`);
-    return data;
-  } catch (error) {
-    console.error('실제 간선 검증 실패:', error);
-    notify('실제 대중교통 경로 조회에 실패했습니다.');
-    return null;
-  }
+  console.log(`간선 ${edge.id}: ${start} → ${end}`, edge.directionalOpts || edge.opts);
+  return edge.directionalOpts || edge.opts;
 };

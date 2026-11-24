@@ -8,11 +8,11 @@ const has=(a,b,line)=>getNeighbors(idOf(a)).some(x=>x.stationId===idOf(b)&&x.lin
 
 test('Gyeongui–Jungang extends the 1–9 network without changing its schema',()=>{
   assert.deepEqual(validateNetwork(),[]);
-  assert.deepEqual(Object.keys(network.lines).sort(),['1','2','3','4','5','6','7','8','9','K']);
-  assert.equal(Object.keys(network.stations).length,287);
-  assert.equal(edges.length,344);
-  assert.equal(Object.values(network.stations).filter(x=>x.isTransferWithinNetwork).length,59);
-  assert.equal(network.transfers.length,71);
+  assert.deepEqual(Object.keys(network.lines).sort(),['1','2','3','4','5','6','7','8','9','B','K','S']);
+  assert.equal(Object.keys(network.stations).length,351);
+  assert.equal(edges.length,421);
+  assert.equal(Object.values(network.stations).filter(x=>x.isTransferWithinNetwork).length,72);
+  assert.equal(network.transfers.length,89);
   for(const s of Object.values(network.stations)){
     assert.ok(Number.isFinite(s.lat)&&Number.isFinite(s.lng));
     assert.equal(s.stationName,`${s.name}역`);
@@ -46,7 +46,7 @@ test('verified branches and circular lines have real links but no imagined jumps
 test('real interchange identity matches lines without false auto-merge',()=>{
   assert.deepEqual(getStation(idOf('석계')).lineIds,['1','6']);
   assert.deepEqual(getStation(idOf('태릉입구')).lineIds,['6','7']);
-  assert.deepEqual(getStation(idOf('왕십리')).lineIds,['2','5','K']);
+  assert.deepEqual(getStation(idOf('왕십리')).lineIds,['2','5','B','K']);
   assert.deepEqual(getStation(idOf('종로3가')).lineIds,['1','3','5']);
   assert.equal(getTransfers(idOf('종로3가')).length,3);
   assert.deepEqual(getStation(idOf('이수')).lineIds,['4','7']);
@@ -102,7 +102,7 @@ test('Gyeongui Sinchon and line-2 Sinchon are not false interchanges',()=>{
 
 test('actual connected interchanges reuse their Step4 IDs and unknown times remain null',()=>{
   for(const [name, expected] of [
-    ['공덕',['5','6','K']], ['왕십리',['2','5','K']],
+    ['공덕',['5','6','K']], ['왕십리',['2','5','B','K']],
     ['효창공원앞',['6','K']], ['용산',['1','K']],
     ['회기',['1','K']], ['상봉',['7','K']], ['서울역',['1','4','K']]
   ]) {
@@ -114,4 +114,52 @@ test('actual connected interchanges reuse their Step4 IDs and unknown times rema
   assert.ok(has('청량리','회기','K'));
   assert.ok(has('청량리','회기','1'));
   assert.equal(network.metadata.virtualWeightWarning.includes('미검증'),true);
+});
+
+test('Suin–Bundang has 63 consecutive source-checked stations and no invented shortcuts',()=>{
+  const ids=network.lines.B.stationIds;
+  assert.equal(ids.length,63);
+  assert.equal(ids[0],idOf('청량리'));
+  assert.equal(ids[1],idOf('왕십리'));
+  assert.equal(ids[ids.length-1],idOf('인천'));
+  assert.equal(edges.filter(e=>e.lineId==='B').length,62);
+  for(let i=1;i<ids.length;i++){
+    assert.ok(getNeighbors(ids[i-1]).some(n=>n.stationId===ids[i]&&n.lineId==='B'));
+  }
+  assert.equal(has('왕십리','강남구청','B'),false);
+  assert.ok(has('정자','미금','B'));
+  assert.equal(network.stations[idOf('능길')].aliases.includes('신길온천'),true);
+});
+
+test('Shinbundang has 16 stations, real interchange identity, and an unfinished separate fare',()=>{
+  const ids=network.lines.S.stationIds;
+  assert.equal(ids.length,16);
+  assert.equal(ids[0],idOf('신사'));
+  assert.equal(ids[ids.length-1],idOf('광교'));
+  assert.equal(edges.filter(e=>e.lineId==='S').length,15);
+  assert.ok(has('신사','논현','S'));
+  assert.ok(has('강남','양재','S'));
+  assert.ok(has('정자','미금','S'));
+  assert.equal(has('강남','판교','S'),false);
+  assert.deepEqual(getStation(idOf('정자')).lineIds,['B','S']);
+  assert.deepEqual(getStation(idOf('미금')).lineIds,['B','S']);
+  assert.ok(getTransfers(idOf('정자')).some(t=>t.betweenLineIds.includes('B')&&t.betweenLineIds.includes('S')));
+  assert.equal(network.lines.S.farePolicy,'separate-fare-required');
+  assert.equal(network.lines.S.additionalFareWon,null);
+  assert.ok(network.metadata.premiumFareWarning.includes('미계산'));
+});
+
+test('pre-existing 287 stations and all prior line edges are unmodified',()=>{
+  // Key stations should keep their Step5 route-facing IDs and display coordinates.
+  for(const [id,name] of [
+    ['gwangundae','광운대'],['seokgye','석계'],['s2_loop_208','왕십리'],
+    ['s3_337','신사'],['s7_734','논현'],['s9_925','신논현']
+  ]) {
+    assert.equal(network.stations[id].name,name);
+    assert.ok(Number.isFinite(network.stations[id].lat));
+  }
+  assert.equal(edges.filter(e=>e.lineId==='K').length,23);
+  assert.equal(edges.filter(e=>e.lineId!=='B'&&e.lineId!=='S').length,344);
+  assert.ok(!getTransfers(idOf('신촌')).length);
+  assert.ok(!getTransfers(idOf('신촌(경의선)')).length);
 });
