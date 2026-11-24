@@ -4,6 +4,23 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const E = require('./lib/engine');
+const { network: subwayNetwork } = require('./lib/subwayNetwork');
+const F = require('./lib/farePolicy');
+const { newSegmentRound } = require('./lib/segmentRounds');
+const { newStoredRound, VerifiedRoundError } = require('./lib/verifiedRounds');
+
+// Node.js 20.12+ 환경에서는 프로젝트 루트의 .env를 자동으로 읽는다.
+// 구버전 Node.js/배포 환경에서는 KAKAO_REST_API_KEY 환경변수를 직접 설정하면 된다.
+if (typeof process.loadEnvFile === 'function') {
+  try { process.loadEnvFile(path.join(__dirname, '.env')); }
+  catch (e) { if (e.code !== 'ENOENT') throw e; }
+}
+
+const stationCoordinates = new Map();
+for (const { stationName, lat, lng } of Object.values(subwayNetwork.stations)) {
+  // Ambiguous station names require an explicit station ID or coordinates.
+  stationCoordinates.set(stationName, stationCoordinates.has(stationName) ? null : { lat, lng });
+}
 
 const PORT = process.env.PORT || 3000;
 const HISTORY = path.join(__dirname, 'data', 'game_history.json');
@@ -13,6 +30,35 @@ const TTL = 60 * 60 * 1000;
 const app = express();
 app.use(express.json({ limit: '10kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Legacy endpoints explicitly report that routing is offline.
+app.get('/api/kakao/status', (req, res) => res.json({ configured: false, source: 'json' }));
+app.get('/api/kakao/transit', (req, res) => res.status(410).json({ error: 'routing_offline' }));
+
+app.get('/api/kakao/weights', async (req, res) => {
+  const s = sessions.get(req.query.sessionId);
+  if (!s) return res.status(404).json({ error: 'session_not_found' });
+  s.touched = Date.now();
+  if (req.query.format === 'archive') return res.status(422).json({ error: 'live_session_required' });
+  let edges = s.graph.edges;
+  if (req.query.edgeId !== undefined) {
+    const input = String(req.query.edgeId);
+    if (!/^\d+$/.test(input)) return res.status(400).json({ error: 'invalid_edge_id' });
+    const edge = edges.find(e => e.id === Number(input));
+    if (!edge) return res.status(404).json({ error: 'edge_not_found' });
+    edges = [edge];
+  }
+  try {
+    const results = edges.map(edge => s.baseWeights[edge.id] ?? null);
+    res.json({sessionId:s.id, direction:'both', total:s.graph.edges.length,
+      loaded:s.baseWeights.filter(Boolean).length, baseWeights:results,
+      farePolicy: { adultCardBase: F.ADULT_CARD_BASE, seoulBusTypes: F.SEOUL_BUS_CARD,
+        shinbundangAdditional: F.SHINBUNDANG_EXTRA }, appliedToGame:!!s.graph.verifiedWeights});
+  } catch (error) {
+    console.error('baseWeights load failed:', error);
+    res.status(500).json({error:'weights_load_failed'});
+  }
+});
 
 // ── 기록 파일: 없거나 깨져도 빈 기록으로 시작 (재시작/초기화 안전) ──
 function readHistory() {
@@ -31,18 +77,9 @@ function appendHistory(rec) {
 }
 
 function quotesFor(s) {
-  const q = {};
-  for (const e of s.graph.adj[s.cur]) {
-    const to = E.other(e, s.cur);
-    for (const m of E.MODE_IDS) {
-      const base = E.timeAt(e.opts[m], m, s.used, s.event);   // 예고형 사건 반영 (출발 시각 기준)
-      if (base == null) continue;
-      const qt = E.quote(base, m, s.rem);
-      qt.stam = s.persona ? E.staminaCost(m, e.opts[m], s.persona) : 0;
-      q[`${to}:${m}`] = qt;
-    }
-  }
-  return q;
+  const entries = E.movesFrom(s.graph, s.cur, s, s.persona, s.event);
+  return Object.fromEntries([...entries].map(([key, { q: { time, cost, transfer, stam } }]) =>
+    [key, { time, cost, transfer, stam }]));
 }
 
 // vague(시각 미상) 사건은 시작되기 전까지 정확한 시각을 숨긴다
@@ -60,11 +97,17 @@ function publicState(s) {
       id: s.scenario.id, title: s.scenario.title, text: s.scenario.text, tags: s.scenario.tags,
     },
     levelId: s.levelId || null, goals: s.goals || null,
+    realMapEnabled: Boolean(g.verifiedWeights && g.nodes.every(node => node.stationId)),
+    usesSegmentTimes: g.graphSource === 'verified-segments',
+    subwayPreview: g.graphSource === 'verified-subway-topology' && !g.verifiedWeights,
     event: eventView(s), errand: s.errand ? { ...s.errand, done: s.errandDone } : null,
     week: s.weekId ? { weekId: s.weekId, day: s.scenario.day, name: s.scenario.name } : null,
     stamina: s.persona ? { left: s.maxStamina - s.stamSpent, max: s.maxStamina } : null,
-    nodes: g.nodes.map(({ id, name, x, y }) => ({ id, name, x, y })),
-    edges: g.edges.map(({ id, a, b, opts }) => ({ id, a, b, opts })),
+    nodes: g.nodes.map(({ id, name, stationName, stationId, x, y, lat, lng, lineIds, isTransfer, isTransferWithinNetwork }) => {
+      const point = Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : stationCoordinates.get(stationName);
+      return { id, name, stationName, stationId, x, y, ...point, lineIds, isTransfer, isTransferWithinNetwork };
+    }),
+    edges: g.edges.map(({ id, a, b, opts, lineId, weightSource, directionalOpts }) => ({ id, a, b, opts, lineId, weightSource, directionalOpts })),
     start: s.start, dest: s.dest, cur: s.cur,
     limit: s.limit, used: s.used, resources: s.resources, resLeft: s.resources - s.spent,
     path: s.path, status: s.status, rem: s.rem, quotes: quotesFor(s), transfer: E.cfg.transfer,
@@ -201,7 +244,7 @@ app.get('/api/history', (req, res) => {
     bestRound: h.reduce((m, x) => (x.mode === 'endless' && x.status === 'success' ? Math.max(m, x.round) : m), 0) });
 });
 
-app.post('/api/simulate/start', (req, res) => {
+app.post('/api/simulate/start', async (req, res) => {
   const { mode = 'endless', scenarioId, levelId } = req.body || {};
   let round = Number(req.body && req.body.round) || 1;
   if (!['endless', 'campaign', 'level', 'week'].includes(mode)) return res.status(400).json({ error: 'invalid_mode' });
@@ -217,16 +260,44 @@ app.post('/api/simulate/start', (req, res) => {
     if (!scenario) return res.status(400).json({ error: 'invalid_level' });
     round = scenario.round;
   }
-  let week = null;
+  let week = null, weekDraft = null;
   if (mode === 'week') {
     week = weeks.get((req.body || {}).weekId);
     if (!week) return res.status(404).json({ error: 'week_not_found' });
     if (week.day > E.cfg.week.length) return res.status(409).json({ error: 'week_over' });
     week.touched = Date.now();
-    scenario = weekScenario(week, (req.body || {}).choice);
+    weekDraft = { ...week };
+    scenario = weekScenario(weekDraft, (req.body || {}).choice);
     round = scenario.round;
   }
-  const r = E.newRound({ round, scenario });
+  const subwayMode = process.env.ROUTE_GRAPH_MODE === 'subway';
+  const useStored = subwayMode && process.env.ROUTE_WEIGHT_SOURCE === 'stored';
+  let r;
+  try {
+    if (useStored) {
+      const file = process.env.ROUTE_VERIFIED_ROUNDS_FILE || path.join(__dirname, 'data', 'verifiedRounds.json');
+      r = await newStoredRound(file, { mode, round, scenario });
+    } else if (subwayMode) {
+      const file = process.env.ROUTE_SEGMENTS_FILE || path.join(__dirname, 'data', 'commuteSegments.json');
+      r = await newSegmentRound(file, round, scenario);
+    } else r = E.newRound({ round, scenario });
+  } catch (error) {
+    if (res.destroyed) return;
+    if (error instanceof VerifiedRoundError)
+      return res.status(error.status).json({ error: error.message, upstreamStatus: error.upstreamStatus });
+    if (subwayMode) {
+      console.warn('Verified round generation failed:', error.message);
+      return res.status(422).json({ error: 'verified_map_generation_failed' });
+    }
+    throw error;
+  }
+  if (week) {
+    if (week.day !== weekDraft.day) return res.status(409).json({ error: 'week_day_changed' });
+    if (weekDraft.umbrella && !week.umbrella) {
+      week.umbrella = true;
+      week.savings = weekDraft.savings;
+    }
+  }
   const init = {
     mode, round, scenario, graph: r.graph, start: r.start, dest: r.dest, limit: r.limit, resources: r.resources, opt: r.opt,
     levelId: mode === 'level' ? scenario.id : null, persona: r.persona, maxStamina: r.maxStamina,
@@ -238,9 +309,12 @@ app.post('/api/simulate/start', (req, res) => {
 
 // 맵·출발/도착·자원·제한 시간 등 불변 조건(init)은 그대로, 이동 상태만 새로 시작
 function openSession(init) {
+  // init은 동일 지도를 재도전할 때 공유되므로, 이미 조회한 가중치도 함께 유지된다.
+  if (!init.baseWeights) init.baseWeights = init.graph.verifiedWeights || new Array(init.graph.edges.length).fill(null);
   const s = {
     ...init, init, id: crypto.randomUUID(), cur: init.start, used: 0, spent: 0, stamSpent: 0, rem: 0, path: [], errandDone: false,
     status: 'active', touched: Date.now(),
+    baseWeights: init.baseWeights,
   };
   sessions.set(s.id, s);
   return s;
@@ -263,21 +337,20 @@ app.post('/api/simulate/step', (req, res) => {
   // 입력값 검증: 인접 노드 / 존재하는 수단 / 해당 구간에서 가능한 수단 / 자원 충분
   if (!Number.isInteger(to) || !s.graph.nodes[to]) return res.status(400).json({ error: 'invalid_node' });
   if (!E.MODE_IDS.includes(mode)) return res.status(400).json({ error: 'invalid_mode' });
-  const edge = s.graph.adj[s.cur].find((e) => E.other(e, s.cur) === to);
-  if (!edge) return res.status(400).json({ error: 'not_adjacent' });
-  const raw = edge.opts[mode], base = E.timeAt(raw, mode, s.used, s.event);
-  if (base == null) return res.status(400).json({ error: 'mode_unavailable' });
-  const q = E.quote(base, mode, s.rem);
-  const t = q.time, cost = q.cost;
+  if (!s.graph.adj[s.cur].some((edge) => E.other(edge, s.cur) === to))
+    return res.status(400).json({ error: 'not_adjacent' });
+  const move = E.movesFrom(s.graph, s.cur, s, s.persona, s.event).get(to + ':' + mode);
+  if (!move) return res.status(400).json({ error: 'mode_unavailable' });
+  const q = move.q;
+  const { time: t, cost, stam } = q;
   if (cost > s.resources - s.spent) return res.status(400).json({ error: 'not_enough_money' });
 
-  const stam = s.persona ? E.staminaCost(mode, raw, s.persona) : 0;
   if (stam > s.maxStamina - s.stamSpent) return res.status(400).json({ error: 'not_enough_stamina' });
 
   s.touched = Date.now();
   s.stamSpent += stam;
   s.path.push({ from: s.cur, to, mode, time: t, cost, transfer: q.transfer, stamina: stam });
-  s.rem = E.nextRem(mode, t, s.rem);
+  Object.assign(s, { rem: q.rem, line: q.line, paid: q.paid, premium: q.premium });
   s.cur = to; s.used += t; s.spent += cost;
   if (s.errand && to === s.errand.node) s.errandDone = true;
 

@@ -174,8 +174,10 @@ footer { display:grid; grid-template-columns:minmax(350px,1.35fr) minmax(180px,1
 .info b { font-size:12px; color:var(--ink); font-weight:650; margin-left:0; }
 .xfer { font-size:10px; font-weight:500; color:var(--muted); }
 .go { font-size:13px; min-width:135px; padding:16px; border-radius:10px; }
-.giveup { font-size:11px; background:transparent; border-color:transparent; color:var(--muted); padding:8px; }
-.move-warning { grid-column:1/-1; order:5; margin:0; font-size:11px; color:var(--accent); }
+.round-options { grid-column:1/-1; order:5; display:flex; align-items:center; flex-wrap:wrap; gap:8px 14px; }
+.round-options .giveup { margin-inline-start:auto; min-height:42px; padding:8px 13px; font-size:12px; opacity:1; }
+.round-options .giveup:not(.primary) { border-color:var(--line); }
+.move-warning { flex:1 1 220px; margin:0; font-size:12px; color:var(--accent); line-height:1.5; }
 .low-resource { color:var(--accent)!important; }
 /* Dialogs and notices */
 .modal { background:#172b275e; backdrop-filter:blur(4px); padding:20px; }
@@ -212,7 +214,6 @@ footer { display:grid; grid-template-columns:minmax(350px,1.35fr) minmax(180px,1
   .hud-btns { margin-left:auto; }
   aside { width:240px; }
   footer { grid-template-columns:minmax(320px,1.5fr) minmax(160px,1fr) auto; gap:10px 12px; }
-  .giveup { grid-column:3; }
 }
 @media(max-width:800px) {
   .home-shell { padding:20px 24px; }
@@ -274,8 +275,6 @@ footer { display:grid; grid-template-columns:minmax(350px,1.35fr) minmax(180px,1
   .info-title { font-size:9px; }
   .info b { font-size:11px; }
   .go { min-width:130px; padding:12px; font-size:12px; }
-  .giveup { grid-column:1/-1; justify-self:end; min-height:36px; padding:6px 10px; }
-  .move-warning { grid-column:1/-1; font-size:10px; }
   .modal { padding:16px; }
   .modal-box { border-radius:16px; padding:24px; max-height:88dvh; }
   .modal-box h2 { font-size:20px; }
@@ -327,9 +326,63 @@ footer { grid-template-columns:minmax(0,1fr) auto; }
 .modes-slot { grid-column:1/-1; }
 .modes-slot:empty { display:none; }
 .info { border-left:0; padding-left:0; align-self:center; }
-.giveup { grid-column:auto; justify-self:end; }
 .modes.pop { position:absolute; z-index:6; display:flex; flex-direction:column; gap:6px; width:236px; padding:8px; background:var(--panel); border:1px solid var(--line); border-radius:14px; box-shadow:0 10px 28px rgba(0,0,0,.22); }
 .modes.pop .mode { min-height:54px; }
 .modes.pop .mode:not(:disabled):hover { border-color:var(--accent); background:var(--bg); }
 .mode:not(:disabled) { cursor:pointer; }
 .mode-tag { font-size:13px; paint-order:stroke; stroke:var(--map); stroke-width:4px; stroke-linejoin:round; }
+
+/* 카카오맵 표시 영역 */
+#kakao-map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* 지도 전환 버튼 */
+.map-switch {
+  position: absolute;
+  top: 60px;
+  left: 12px;
+  z-index: 7;
+  display: flex;
+  gap: 6px;
+}
+
+.map-switch button {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+/* 실제 지도 표시 시 게임 전용 조작 요소 숨기기 */
+.map-wrap.kakao-active {
+  cursor: auto;
+  touch-action: auto;
+}
+
+.map-wrap.kakao-active .map-key,
+.map-wrap.kakao-active .zoom-btns,
+.map-wrap.kakao-active .location-btns,
+.map-wrap.kakao-active .map-hint,
+.map-wrap.kakao-active .modes.pop {
+  display: none !important;
+}
+
+/* 카카오맵의 게임 노드 이름 */
+.kakao-node-label {
+  padding: 4px 9px;
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}

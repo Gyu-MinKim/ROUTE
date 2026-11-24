@@ -26,13 +26,12 @@ function applySettings() {
   store.set('route.settings', settings);
 }
 
-async function api(path, body) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+async function api(path, body, controller = new AbortController()) {
+  const timeout = setTimeout(() => controller.abort(), path === '/api/simulate/start' ? 35000 : 15000);
   try {
     const res = await fetch(path, { ...(body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}), signal: controller.signal });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) { const e = new Error(data.error || 'error'); e.code = data.error; throw e; }
+    if (!res.ok) { const e = new Error(data.error || 'error'); e.code = data.error; e.upstreamStatus = data.upstreamStatus; throw e; }
     return data;
   } finally { clearTimeout(timeout); }
 }
@@ -324,7 +323,7 @@ function updateHud() {
     $('#hud-stam').textContent = `${S.stamina.left} / ${S.stamina.max}`;
     $('#stam-fill').style.width = Math.max(0, 100 * S.stamina.left / S.stamina.max) + '%';
   }
-  $('#log').innerHTML = S.path.map((p) => `<li>${S.nodes[p.from].name} → ${S.nodes[p.to].name} <small>(${MODES[p.mode].icon} ${p.time}분 · ${p.transfer ? '환승 무료' : won(p.cost)})</small></li>`).join('') || '<li style="list-style:none;opacity:.6">노드를 클릭해 이동하세요</li>';
+  $('#log').innerHTML = S.path.map((p) => `<li>${S.nodes[p.from].name} → ${S.nodes[p.to].name} <small>(${MODES[p.mode].icon} ${p.time}분 · ${p.transfer && p.cost === 0 ? '환승 무료' : won(p.cost)})</small></li>`).join('') || '<li style="list-style:none;opacity:.6">노드를 클릭해 이동하세요</li>';
 }
 
 function moveUnavailable(q) {
@@ -338,7 +337,7 @@ function moveUnavailable(q) {
 function placeModes() {
   const modesEl = $('.modes'), modesSlot = $('#modes-slot');
   const open = !!S && S.status === 'active' && sel != null && !busy;
-  const pop = !mobile() && typeof map.getScreenCTM === 'function' && typeof map.createSVGPoint === 'function';
+  const pop = !mobile() && !wrap.classList.contains('kakao-active') && typeof map.getScreenCTM === 'function' && typeof map.createSVGPoint === 'function';
   const host = pop ? wrap : modesSlot;
   if (modesEl.parentElement !== host) host.appendChild(modesEl);
   modesEl.classList.toggle('pop', pop);
@@ -360,7 +359,7 @@ function updateFooter() {
     const m = b.dataset.mode, q = quote(m), reason = sel != null ? moveUnavailable(q) : '';
     const ok = active && sel != null && !reason;
     b.disabled = !ok;
-    const detail = !active ? (busy ? '이동 준비 중' : '라운드 종료') : sel == null ? '역을 먼저 선택하세요' : reason || `${q.time}분 · ${q.transfer ? '환승 무료' : won(q.cost)}${S.stamina ? ` · 체력 −${q.stam}` : ''}`;
+    const detail = !active ? (busy ? '이동 준비 중' : '라운드 종료') : sel == null ? '역을 먼저 선택하세요' : reason || `${q.time}분 · ${q.transfer && q.cost === 0 ? '환승 무료' : won(q.cost)}${S.stamina ? ` · 체력 −${q.stam}` : ''}`;
     b.innerHTML = `<span class="mode-symbol" aria-hidden="true">${MODES[m].icon}</span><span>${MODES[m].name}</span><small>${detail}</small>`;
     b.title = detail;
   });
@@ -376,6 +375,7 @@ function updateFooter() {
 const evEffect = (ev) => (ev.off ? `${MODES[ev.mode].name} 이용 불가` : `${MODES[ev.mode].name} 시간 ×${ev.mul}`);
 function missionSub() {
   let h = S.scenario ? S.scenario.text : '';
+  if (S.usesSegmentTimes) h += '<p class="muted">등교 기준은 평일 08:00~09:00예요. 지하철은 표준 운행시간, 버스·도보는 오전 시간대·지연 여부가 확인되지 않은 구간 관측값을 사용해요.</p>';
   if (S.errand) h += `<div class="errand ${S.errand.done ? 'done' : ''}">${S.errand.icon} ${S.errand.goal} ${S.errand.done ? '✔' : '(지도의 ' + S.errand.icon + ' 역)'}</div>`;
   if (S.goals) h += goalsHtml(S.goals);
   return h;
@@ -394,15 +394,47 @@ async function startRound(retry) {
   const requestedCtx = { ...ctx };
   busy = true; replayTok++; replaying = false;
   updateFooter();
+  const controller = new AbortController();
+  const cancel = () => {
+    roundToken++;
+    controller.abort();
+    if (sessionCtx) ctx = { ...sessionCtx };
+    busy = false;
+    updateFooter();
+    goHome();
+  };
+  modal('라운드 준비 중', '<p role="status">이동 경로와 기준 소요 시간을 확인하고 있어요. 준비하는 동안 게임 시간은 흐르지 않아요.</p>',
+    [{ label: '홈으로', fn: cancel }], { onDismiss: cancel });
   try {
-    const next = await api(retry ? '/api/simulate/retry' : '/api/simulate/start', retry ? { sessionId: S.sessionId } : ctx.kind === 'campaign' ? { mode: 'campaign', scenarioId: ctx.scenarioId } : ctx.kind === 'level' ? { mode: 'level', levelId: ctx.levelId } : ctx.kind === 'week' ? { mode: 'week', weekId: ctx.weekId, choice: ctx.choice } : { mode: 'endless', round: ctx.round });
+    const next = await api(retry ? '/api/simulate/retry' : '/api/simulate/start', retry ? { sessionId: S.sessionId } : ctx.kind === 'campaign' ? { mode: 'campaign', scenarioId: ctx.scenarioId } : ctx.kind === 'level' ? { mode: 'level', levelId: ctx.levelId } : ctx.kind === 'week' ? { mode: 'week', weekId: ctx.weekId, choice: ctx.choice } : { mode: 'endless', round: ctx.round }, controller);
     if (token !== roundToken) return;
+    closeModal(false);
     S = next; sessionCtx = { ...ctx }; weekBriefing = null;
   } catch (e) {
+    if (token !== roundToken) return;
     if (sessionCtx) ctx = { ...sessionCtx };
     busy = false; updateFooter();
     const expired = e.code === 'session_not_found';
-    modal(expired ? '이 지도의 보관 시간이 끝났어요' : '여정을 시작하지 못했어요', `<p>${expired ? '같은 지도로 재도전할 수 없어요. 새 지도로 시작할 수 있어요.' : '연결을 확인한 뒤 다시 시도해 주세요.'}</p>`, [
+    const startErrors = {
+      round_preparation_timeout: '경로 준비 시간이 길어졌어요. 새 역 조합으로 다시 시도할 수 있어요.',
+      segment_coverage_missing: '저장된 역 구간으로 이번 레벨의 완주 경로를 구성할 수 없어요.',
+      verified_data_missing: '저장된 실제 이동 데이터가 아직 준비되지 않았어요.',
+      verified_data_unreadable: '저장된 실제 이동 데이터 파일을 읽을 수 없어요.',
+      verified_data_invalid: '저장된 이동 데이터의 형식이나 역·노선 연결을 확인해 주세요.',
+      verified_lookup_incomplete: '일부 경로를 조회하지 못해 완주 가능한 지도를 확인할 수 없어요.',
+      verified_level_weights_missing: '이 레벨 지도에 확인된 이동 시간이 아직 없어요.',
+      verified_level_data_missing: '이 레벨에서 사용할 검증된 실제 지도 데이터가 아직 없어요.',
+      kakao_key_missing: '카카오 길찾기 인증 설정이 필요해요.',
+      kakao_upstream_error: Number.isInteger(e.upstreamStatus)
+        ? `카카오 길찾기가 오류(HTTP ${e.upstreamStatus})를 반환해 이동 시간을 확인하지 못했어요.`
+        : '카카오 길찾기에서 이동 시간을 확인하지 못했어요.',
+      kakao_auth_failed: '카카오 길찾기 인증 또는 제휴 권한을 확인해 주세요.',
+      kakao_rate_limited: '카카오 길찾기 호출 한도에 도달했어요. 잠시 뒤 다시 시도해 주세요.',
+      no_verified_route: '검증된 이동 경로를 찾지 못했어요.',
+      no_playable_verified_route: '검증된 경로 중 이번 레벨의 체력·요금·운행 조건으로 완주할 수 있는 경로가 없어요.',
+      verified_map_generation_failed: '이번 레벨에 맞는 실제 노선 지도를 구성하지 못했어요.',
+    };
+    modal(expired ? '이 지도의 보관 시간이 끝났어요' : '여정을 시작하지 못했어요', `<p>${expired ? '같은 지도로 재도전할 수 없어요. 새 지도로 시작할 수 있어요.' : (Object.hasOwn(startErrors, e.code) ? startErrors[e.code] : '연결을 확인한 뒤 다시 시도해 주세요.')}</p>`, [
       { label: '홈으로', fn: goHome },
       { label: expired ? '새 지도로 시작' : '다시 시도', primary: true, fn: () => { ctx = { ...requestedCtx }; startRound(expired ? false : retry); } },
     ]);
@@ -705,17 +737,24 @@ function metroHTML() {
 function roundSubwayHTML() {
   if (!S) return '<p>라운드를 시작하면 노선도가 표시돼요.</p>';
   const se = S.edges.filter((e) => e.opts.subway != null);
+  const minutes = n => n == null ? '—' : n + '분';
+  const edgeTime = (e, mode) => {
+    if (!e.directionalOpts) return minutes(e.opts[mode]);
+    const { forward, reverse } = e.directionalOpts;
+    return forward[mode] === reverse[mode] ? minutes(forward[mode])
+      : '→ ' + minutes(forward[mode]) + ' / ← ' + minutes(reverse[mode]);
+  };
   const palette = ['#782F40', '#2e7d6b', '#c28a1e', '#3b6ea8', '#8a5fb3'];
   const adj = {}; se.forEach((e) => { (adj[e.a] = adj[e.a] || []).push(e.b); (adj[e.b] = adj[e.b] || []).push(e.a); });
   const comp = {}; let c = 0;
   Object.keys(adj).forEach((k) => { if (comp[k] !== undefined) return; const q = [Number(k)]; comp[k] = c; while (q.length) { const n = q.pop(); adj[n].forEach((m) => { if (comp[m] === undefined) { comp[m] = c; q.push(m); } }); } c += 1; });
   const col = (n) => palette[comp[n] % palette.length];
-  let h = `<div class="sub-legend"><span><i style="background:var(--accent)"></i>지하철 구간 (기본요금 ${won(1550)}, 환승 시 무료)</span><span>흐린 역: 지하철 없음</span><span>📍 출발 · 🚩 목적지 · 채워진 역: 현재 위치</span></div>
+  let h = `<div class="sub-legend"><span><i style="background:var(--accent)"></i>지하철 구간 (기본요금 ${won(1550)}, 환승·별도운임은 이동 견적에 표시)</span><span>흐린 역: 지하철 없음</span><span>📍 출발 · 🚩 목적지 · 채워진 역: 현재 위치</span></div>
     <svg viewBox="0 0 1000 600">`;
   se.forEach((e) => {
     const A = S.nodes[e.a], B = S.nodes[e.b];
     h += `<line class="sline" stroke="${col(e.a)}" x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}"/>
-      <text class="stime" x="${(A.x + B.x) / 2}" y="${(A.y + B.y) / 2 - 8}">${e.opts.subway}분</text>`;
+      <text class="stime" x="${(A.x + B.x) / 2}" y="${(A.y + B.y) / 2 - 8}">${edgeTime(e, 'subway')}</text>`;
   });
   S.nodes.forEach((n) => {
     const on = adj[n.id], isCur = n.id === S.cur;
@@ -723,7 +762,7 @@ function roundSubwayHTML() {
       <text class="sname ${n.id === S.dest || isCur ? 'me' : ''}" x="${n.x}" y="${n.y + 26}" text-anchor="middle" ${on ? '' : 'style="opacity:.55"'}>${n.name}${n.id === S.dest ? ' 🚩' : ''}${n.id === S.start ? ' 📍' : ''}</text>`;
   });
   h += '</svg>';
-  const rows = se.map((e) => `<tr><td>${S.nodes[e.a].name} ↔ ${S.nodes[e.b].name}</td><td>🚇 ${e.opts.subway}분</td><td>🚶 ${e.opts.walk != null ? e.opts.walk + '분' : '불가'}</td><td>🚌 ${e.opts.bus != null ? e.opts.bus + '분' : '-'}</td></tr>`).join('');
+  const rows = se.map((e) => `<tr><td>${S.nodes[e.a].name} ↔ ${S.nodes[e.b].name}</td><td>🚇 ${edgeTime(e, 'subway')}</td><td>🚶 ${edgeTime(e, 'walk')}</td><td>🚌 ${edgeTime(e, 'bus')}</td></tr>`).join('');
   h += se.length ? `<table class="sub-table"><tr><th>구간</th><th>지하철</th><th>도보</th><th>버스</th></tr>${rows}</table>` : '<p>이번 라운드에는 지하철 구간이 없어요 (버스/도보로 이동).</p>';
   return h;
 }

@@ -1,0 +1,11 @@
+Saved /mnt/data/ROUTE_Subway_Seoul_Step4/data/subwayNetwork.json
+Stations 275 transfer locations 50 transfer pairs 56
+1 33 branches [('금천구청 방면', 4)]
+2 43 branches [('성수지선', 5), ('신정지선', 5)]
+3 33 branches []
+4 26 branches []
+5 45 branches [('마천 방면', 8)]
+6 34 branches [('응암 순환 구간 (방향성 미적용)', 7)]
+7 41 branches []
+8 12 branches []
+9 38 branches []

@@ -72,6 +72,7 @@
     else if (resumable) document.getElementById('btn-resume').textContent = `${S.mode === 'level' ? `레벨 ${S.levelId}` : S.mode === 'campaign' ? '캠페인' : S.mode === 'week' ? `${S.week?.name || '일주일 등교'}` : `라운드 ${S.round}`} 이어서 하기 →`;
     if (!S) return;
     document.getElementById('game-context').textContent = S.mode === 'level' ? `레벨 ${S.levelId} · ${S.scenario?.title || ''}` : S.mode === 'campaign' ? S.scenario?.title || '캠페인' : S.mode === 'week' ? `일주일 등교 · ${S.week?.name || ''}` : `무한 모드 · 라운드 ${S.round}`;
+    if (S.subwayPreview) document.getElementById('game-context').textContent += ' · 노선 미리보기 (게임용 시간)';
     document.getElementById('current-station').textContent = S.nodes[S.cur].name;
     document.getElementById('destination-station').textContent = S.nodes[S.dest].name;
     document.getElementById('selection-route').textContent = busy ? '여정을 준비하고 있어요…' : S.status !== 'active' ? '여정을 마쳤어요' : sel == null ? '이동할 역을 선택하세요' : `${S.nodes[S.cur].name} → ${S.nodes[sel].name}`;
@@ -92,10 +93,21 @@
       });
       stationOptionsKey = optionsKey;
     }
-    const warnings = sel != null && S.status === 'active' ? MODE_ORDER.map((m) => S.quotes[`${sel}:${m}`]).filter(Boolean).map(moveUnavailable).filter(Boolean) : [];
+    const playing = S.status === 'active' && !busy;
+    const available = playing ? Object.entries(S.quotes)
+      .filter(([, quote]) => !moveUnavailable(quote))
+      .map(([key]) => Number(key.split(':')[0])) : [];
+    const noMoves = playing && available.length === 0;
+    const selectedBlocked = playing && sel != null && !available.includes(sel);
+    const giveup = document.getElementById('btn-giveup');
     const warning = document.getElementById('move-warning');
-    warning.textContent = warnings.length ? '이용할 수 없는 수단은 카드에 이유가 표시돼요. 다른 수단이나 역을 선택해 주세요.' : '';
-    warning.classList.toggle('hidden', !warnings.length);
+    const alternative = selectedBlocked && !noMoves ? S.nodes[available[0]].name : '';
+    let message = '';
+    if (noMoves) message = '남은 시간·교통비·체력으로 이동할 수 있는 역이 없어요. 라운드를 포기하면 같은 지도로 다시 도전할 수 있어요.';
+    else if (selectedBlocked) message = '선택한 역으로 갈 수 없어요. ' + alternative + '으로 이동하거나 라운드를 포기할 수 있어요.';
+    warning.textContent = message;
+    warning.classList.toggle('hidden', !message);
+    giveup.classList.toggle('primary', noMoves || selectedBlocked);
     document.getElementById('hud-time').classList.toggle('low-resource', S.limit - S.used <= Math.max(10, S.limit * 0.15));
     if (!inGame) document.getElementById('tutorial').classList.add('hidden');
   }

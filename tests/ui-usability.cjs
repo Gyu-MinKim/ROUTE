@@ -10,9 +10,11 @@ const os = require('node:os');
 const root = path.resolve(process.argv[2] || path.join(__dirname, '..'));
 // Never write test play history into the shared workspace.
 const runtime = fs.mkdtempSync(path.join(os.tmpdir(), 'route-ui-test-'));
-fs.mkdirSync(path.join(runtime, 'lib'));
-for (const file of ['server.js', 'routes.json', 'lib/engine.js']) fs.copyFileSync(path.join(root, file), path.join(runtime, file));
-fs.symlinkSync(path.join(root, 'node_modules'), path.join(runtime, 'node_modules'), 'dir');
+fs.cpSync(path.join(root, 'lib'), path.join(runtime, 'lib'), { recursive: true });
+fs.mkdirSync(path.join(runtime, 'data'));
+fs.copyFileSync(path.join(root, 'data', 'subwayNetwork.json'), path.join(runtime, 'data', 'subwayNetwork.json'));
+for (const file of ['server.js', 'routes.json']) fs.copyFileSync(path.join(root, file), path.join(runtime, file));
+fs.cpSync(path.join(root, 'node_modules'), path.join(runtime, 'node_modules'), { recursive: true });
 const app = require(path.join(runtime, 'server.js'));
 process.on('exit', () => fs.rmSync(runtime, { recursive: true, force: true }));
 const calls=[];
@@ -51,6 +53,32 @@ let count=0;const ok=t=>{count++;console.log('PASS',t);};
 (async()=>{
  await settle();
  assert.equal(run('levels.length'),15);assert.equal(document.querySelectorAll('[id]').length,new Set([...document.querySelectorAll('[id]')].map(n=>n.id)).size);ok('initialization and unique HTML IDs');
+ const originalFetch = context.fetch;
+ let releaseStart, pendingSignal;
+ context.fetch = (url, options) => {
+   if (url !== '/api/simulate/start') return originalFetch(url, options);
+   pendingSignal = options.signal;
+   return new Promise(resolve => { releaseStart = resolve; });
+ };
+ const pending = run('startRound()');
+ assert.match(el('#modal-title').textContent, /준비 중/);
+ await run('startRound()');
+ await click(action('홈으로'));
+ assert.equal(pendingSignal.aborted, true);
+ releaseStart({ ok: true, json: async () => ({}) });
+ await pending;
+ assert.equal(run('S'), null);
+ assert.equal(run('busy'), false);
+ assert.equal(el('#start').classList.contains('active'), true);
+ assert.equal(el('#modal').classList.contains('hidden'), true);
+ context.fetch = originalFetch;
+ ok('pending start can be canceled and a late response cannot reopen the game');
+ context.fetch = async () => ({ ok: false, json: async () => ({ error: 'kakao_upstream_error', upstreamStatus: 503 }) });
+ await run('startRound()');
+ assert.match(el('#modal-body').textContent, /카카오.*HTTP 503/);
+ context.fetch = originalFetch;
+ await click(action('홈으로'));
+ ok('round failure identifies provider status');
  await click('#btn-play'); assert.match(el('#modal-title').textContent,/Level 1/); await click(action('시작하기'));
  assert.equal(run('S.status'),'active'); assert.equal(el('#game').classList.contains('active'),true);assert.match(el('#modal-title').textContent,/첫 등교/);ok('recommended level starts through one mission briefing');
  await click('#modal-close'); assert.equal(el('#modal').classList.contains('hidden'),true);assert.equal(run('busy'),false);assert.equal(el('#game').inert,false);ok('briefing close releases gameplay and inert state');
@@ -63,6 +91,21 @@ let count=0;const ok=t=>{count++;console.log('PASS',t);};
  await click('#btn-settings');await click('#m-reset');assert.match(el('#modal-title').textContent,/지울/);window.localStorage.setItem('route.progress','{"1":3}');await click(action('취소'));assert.equal(window.localStorage.getItem('route.progress'),'{"1":3}');await click('#m-reset');await click(action('기록 삭제'));assert.equal(window.localStorage.getItem('route.progress'),null);assert.ok(window.localStorage.getItem('route.settings'));ok('progress reset needs confirmation and preserves settings');
  await click('#modal-close');await click('#btn-resume');
  run('S.quotes[`${sel}:walk`]={time:S.limit+1,cost:0,stam:0}; updateFooter()');assert.equal(el('[data-mode="walk"]').disabled,true);assert.match(el('[data-mode="walk"]').textContent,/초과/);{const before=run('S.path.length');await run('moveBy("walk")');assert.equal(run('S.path.length'),before);}ok('time-overrun reason is explicit and cannot be moved');
+ // Reproduce a blocked station with another option, then a round with no affordable moves.
+ run('globalThis.blockedQuotes = Object.fromEntries(Object.keys(S.quotes).map(key => [key, {time:S.limit+1,cost:0,stam:0}])); S.quotes={...blockedQuotes, [sel+":walk"]:{time:S.limit+1,cost:0,stam:0}}; const alternate=adjacent(S.cur).find(id=>id!==sel); if(alternate!=null) S.quotes[alternate+":walk"]={time:1,cost:0,stam:0}; updateFooter()');
+ if (run('alternate!=null')) {
+  assert.match(el('#move-warning').textContent,/선택한 역으로 갈 수 없어요/);
+  assert.ok(el('#move-warning').textContent.includes(run('S.nodes[alternate].name')));
+ }
+ assert.equal(el('#btn-giveup').classList.contains('primary'),true);
+ run('S.quotes=blockedQuotes; sel=null; updateFooter()');
+ assert.match(el('#move-warning').textContent,/이동할 수 있는 역이 없어요/);
+ assert.equal(el('#btn-giveup').disabled,false);
+ await click('#btn-giveup');await click(action('취소'));assert.equal(run('S.status'),'active');
+ await click('#btn-giveup');await click(action('포기'));assert.equal(run('S.status'),'fail');
+ await click(action('같은 지도 재도전'));assert.equal(run('S.status'),'active');
+ assert.equal(el('#btn-giveup').classList.contains('primary'),false);
+ ok('blocked movement explains alternatives and offers give up with same-map retry');
  // Recover the real quotes by starting a new round after explicit confirmation.
  await click('#btn-home');await click('#btn-endless');await click(action('새 게임 시작'));await click('#modal-close');assert.equal(run('ctx.kind'),'endless');
  await click('#btn-giveup');await click(action('포기'));assert.equal(run('S.status'),'fail');assert.ok(action('같은 지도 재도전'));assert.ok(action('홈으로'));ok('failed round provides direct retry and exit');

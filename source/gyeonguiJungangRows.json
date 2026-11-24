@@ -1,0 +1,190 @@
+{
+  "mainStationNames": [
+    "한국항공대",
+    "수색",
+    "디지털미디어시티",
+    "가좌",
+    "홍대입구",
+    "서강대",
+    "공덕",
+    "효창공원앞",
+    "용산",
+    "이촌",
+    "서빙고",
+    "한남",
+    "옥수",
+    "응봉",
+    "왕십리",
+    "청량리",
+    "회기",
+    "중랑",
+    "상봉",
+    "망우",
+    "양원",
+    "구리"
+  ],
+  "branches": [
+    {
+      "name": "서울역 지선",
+      "stationNames": [
+        "가좌",
+        "신촌(경의선)",
+        "서울"
+      ]
+    }
+  ],
+  "stationRows": [
+    {
+      "id": "gj_hangukhanggongdae",
+      "name": "한국항공대",
+      "lat": 37.60289592260483,
+      "lng": 126.86823924014628
+    },
+    {
+      "id": "gj_susaek",
+      "name": "수색",
+      "lat": 37.580842,
+      "lng": 126.895611
+    },
+    {
+      "name": "디지털미디어시티",
+      "lat": 37.576646,
+      "lng": 126.900984
+    },
+    {
+      "id": "gj_gajwa",
+      "name": "가좌",
+      "lat": 37.568491,
+      "lng": 126.915487
+    },
+    {
+      "name": "홍대입구",
+      "lat": 37.557192,
+      "lng": 126.925381
+    },
+    {
+      "id": "gj_seogangdae",
+      "name": "서강대",
+      "lat": 37.551881,
+      "lng": 126.935711
+    },
+    {
+      "name": "공덕",
+      "lat": 37.544018,
+      "lng": 126.951592
+    },
+    {
+      "name": "효창공원앞",
+      "lat": 37.539261,
+      "lng": 126.961351
+    },
+    {
+      "name": "용산",
+      "lat": 37.529849,
+      "lng": 126.964561
+    },
+    {
+      "name": "이촌",
+      "lat": 37.522272,
+      "lng": 126.974345
+    },
+    {
+      "id": "gj_seobinggo",
+      "name": "서빙고",
+      "lat": 37.519594,
+      "lng": 126.988537
+    },
+    {
+      "id": "gj_hannam",
+      "name": "한남",
+      "lat": 37.52943,
+      "lng": 127.009169
+    },
+    {
+      "name": "옥수",
+      "lat": 37.540685,
+      "lng": 127.017965
+    },
+    {
+      "id": "gj_eungbong",
+      "name": "응봉",
+      "lat": 37.549946,
+      "lng": 127.034538
+    },
+    {
+      "name": "왕십리",
+      "lat": 37.561533,
+      "lng": 127.037732
+    },
+    {
+      "name": "청량리",
+      "lat": 37.580178,
+      "lng": 127.046835
+    },
+    {
+      "name": "회기",
+      "lat": 37.58946,
+      "lng": 127.057583
+    },
+    {
+      "id": "gj_jungnang",
+      "name": "중랑",
+      "lat": 37.594917,
+      "lng": 127.076116,
+      "knownOtherTransferLines": [
+        "경춘선"
+      ]
+    },
+    {
+      "name": "상봉",
+      "lat": 37.596362,
+      "lng": 127.085032
+    },
+    {
+      "id": "gj_mangu",
+      "name": "망우",
+      "lat": 37.59955,
+      "lng": 127.091909,
+      "knownOtherTransferLines": [
+        "경춘선"
+      ]
+    },
+    {
+      "id": "gj_yangwon",
+      "name": "양원",
+      "lat": 37.606596,
+      "lng": 127.107906
+    },
+    {
+      "id": "gj_guri",
+      "name": "구리",
+      "lat": 37.603392,
+      "lng": 127.143869,
+      "knownOtherTransferLines": [
+        "8호선"
+      ]
+    },
+    {
+      "id": "gj_sinchon_gyeongui",
+      "name": "신촌(경의선)",
+      "lat": 37.55972,
+      "lng": 126.94306,
+      "aliases": [
+        "신촌역"
+      ],
+      "coordSource": "https://en.wikipedia.org/wiki/Sinchon_station_(Gyeongui_Line)"
+    },
+    {
+      "name": "서울",
+      "lat": 37.554648,
+      "lng": 126.972559
+    }
+  ],
+  "sources": {
+    "nameAndCoordinates": "https://github.com/myyrakle/datasets/blob/master/stations-kr/20260429/subway_stations.csv",
+    "historicalAdjacentPairs": "https://github.com/ledyx/KoreaMetroData/blob/master/src/main/resources/seoul/edges.json",
+    "branchCrossCheck": "https://www.ktdb.go.kr/DATA/pblcte/20260512020132299.pdf",
+    "separateSinchon": "https://en.wikipedia.org/wiki/Sinchon_station_(Gyeongui_Line)",
+    "operationalStatus": "이 파일은 물리적인 정차역 순서와 좌표만 기록. 실제 배차 및 시각별 열차 운행 검증 자료가 아님."
+  }
+}
