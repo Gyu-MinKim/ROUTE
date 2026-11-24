@@ -71,7 +71,7 @@ function setup() {
     CustomOverlay: OverlayStub, Polyline: LineStub, LatLngBounds: BoundsStub,
     LatLng: LatLngStub, event: { addListener() {} } } };
   const context = vm.createContext({ document, window: {kakao}, kakao,
-    S:state, busy:false, sel:null, updateFooter() { status.updateCount++; },
+    S:state, busy:false, sel:null, availableDestinations() { return state.status === 'active' ? state.available ?? [1] : []; }, updateFooter() { status.updateCount++; },
     notify(msg) { status.notifications.push(msg); },
     MouseEvent: class { constructor(type) { this.type = type; } },
     console, fetch: async () => { throw new Error('unexpected fetch'); },
@@ -119,4 +119,26 @@ test('기본 모드는 지도 전환을 숨기고 실제 지도 요청을 무시
   x.state.realMapEnabled = true;
   x.listeners['route:ui']();
   assert.equal(x.mapSwitch.classList.contains('hidden'), false);
+});
+
+test('실제 지도에서 심부름 역과 완료 상태를 갱신한다', async () => {
+  const x = setup();
+  x.state.errand = { node: 1, icon: '💊', goal: '약국 들르기', done: false };
+  await vm.runInContext('showKakaoMap()', x.context);
+  const label = vm.runInContext('nodeLabels[1].getContent()', x.context);
+  assert.equal(label.textContent, '💊 미아역');
+  assert.match(label.title, /약국 들르기/);
+  x.state.errand.done = true;
+  x.listeners['route:ui']();
+  assert.equal(label.textContent, '💊 미아역 ✔');
+  x.state.errand = null;
+  x.listeners['route:ui']();
+  assert.equal(label.textContent, '미아역');
+});
+
+test('실제 지도에서 이동수단이 모두 막힌 연결역을 선택할 수 없다', () => {
+  const x = setup();
+  x.state.available = [];
+  vm.runInContext('selectKakaoNode(1)', x.context);
+  assert.deepEqual(x.clicks, []);
 });

@@ -144,12 +144,8 @@ async function showGameNodes() {
 // 이동수단 선택 및 서버 판정은 기존 game.js가 그대로 수행한다.
 function selectKakaoNode(nodeId) {
   if (!S || S.status !== 'active' || busy) return;
-  const isAdjacent = S.edges.some((edge) =>
-    (edge.a === S.cur && edge.b === nodeId) ||
-    (edge.b === S.cur && edge.a === nodeId)
-  );
-  if (!isAdjacent) {
-    notify('현재 위치에서 간선으로 연결된 역만 선택할 수 있어요.');
+  if (!availableDestinations().includes(nodeId)) {
+    notify('지금 이동할 수 있는 역만 선택할 수 있어요.');
     return;
   }
   const svgNode = gameMapEl.querySelector(`[data-id="${nodeId}"]`);
@@ -167,9 +163,7 @@ function drawGameEdges() {
   const completed = new Set(S.path.map((step) =>
     [Math.min(step.from, step.to), Math.max(step.from, step.to)].join(':')
   ));
-  const reachable = S.status === 'active' ? new Set(S.edges
-    .filter((edge) => edge.a === S.cur || edge.b === S.cur)
-    .map((edge) => edge.a === S.cur ? edge.b : edge.a)) : new Set();
+  const reachable = new Set(availableDestinations());
 
   S.edges.forEach((edge) => {
     const from = nodePositions.get(edge.a), to = nodePositions.get(edge.b);
@@ -194,14 +188,16 @@ function drawGameEdges() {
 
 function styleNodeLabels() {
   if (!S) return;
-  const reachable = S.status === 'active' ? new Set(S.edges
-    .filter((edge) => edge.a === S.cur || edge.b === S.cur)
-    .map((edge) => edge.a === S.cur ? edge.b : edge.a)) : new Set();
+  const reachable = new Set(availableDestinations());
   const visited = new Set([S.start, ...S.path.map((step) => step.to)]);
 
   nodeLabels.forEach((label) => {
     const element = label.getContent();
     const id = Number(element.dataset.nodeId);
+    const errand = S.errand?.node === id ? S.errand : null;
+    const name = S.nodes[id].name;
+    element.textContent = errand ? `${errand.icon} ${name}${errand.done ? ' ✔' : ''}` : name;
+    element.setAttribute('aria-label', errand ? `${name}, 경유지, ${errand.goal}${errand.done ? ', 완료' : ''}` : name);
     const current = id === S.cur;
     const selected = id === sel;
     const canSelect = reachable.has(id);
@@ -216,6 +212,7 @@ function styleNodeLabels() {
     element.style.fontWeight = current ? '800' : '600';
     element.style.whiteSpace = 'nowrap';
     element.title = current ? '현재 위치' : canSelect ? '클릭하여 이동할 역 선택' : '현재 위치에서는 직접 이동할 수 없는 역';
+    if (errand) element.title = `${errand.goal}${errand.done ? ' (완료)' : ''} · ${element.title}`;
     element.setAttribute('aria-disabled', String(!canSelect || busy));
   });
 }

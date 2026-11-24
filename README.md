@@ -21,24 +21,24 @@ npm test
 
 ## 실제 지도 모드
 
-기본 게임은 저장소 파일만으로 실행할 수 있습니다. 실제 지도 모드는 코드와 구간 데이터를 별도로 배포합니다. 저장소에는 공개 지하철 자료가 포함됩니다. 버스·도보까지 포함한 전체 카탈로그는 해당 환경에서 재사용이 허용된 파일을 사용합니다.
-
-**새 PC와 배포 서버 설치 절차**
-
-1. 데이터 담당자가 배포가 허용된 완성본 `commuteSegments.json`을 팀의 접근 제한 저장소에 버전별로 보관하고, 다운로드 위치와 SHA-256을 배포 담당자에게 전달합니다. 현재 로컬 관측 자료의 재배포 권한과 팀 다운로드 주소는 확정되지 않았습니다.
-2. 팀원은 전달받은 파일을 프로젝트의 `data/commuteSegments.json`에 복사합니다. 배포 서버에서는 읽기 전용으로 마운트하고 `ROUTE_SEGMENTS_FILE`에 절대경로를 지정할 수 있습니다. 완성본을 설치한 뒤 생성기를 다시 실행하면 파일이 교체됩니다.
-3. 프로젝트 루트에서 아래 명령을 실행합니다(Git Bash). 데이터 검사에 성공하면 실제 지도 모드를 시작합니다.
+저장소에 포함된 지하철·버스·도보 공개 자료로 실제 지도 모드를 준비할 수 있습니다. 프로젝트 루트의 Git Bash에서 실행합니다.
 
 ```sh
 npm ci
+node tools/buildCommuteCatalog.cjs
 npm run data:check && ROUTE_GRAPH_MODE=subway npm start
 ```
 
-배포 파일 대신 사용 가능한 로컬 원본 `data/verifiedSegments.json`이 있으면 `node tools/buildCommuteCatalog.cjs`로 완성본을 만들고 같은 검사를 실행합니다. 서버는 방향별 구간과 저장 좌표를 읽고 카카오맵 SDK로 마커와 연결선을 그립니다.
+카탈로그 생성기는 공개 철도 자료와 [서울시 버스 구간 자료](source/seoulWeekdayBus.json)를 방향별 이동 데이터로 합칩니다. 사용 가능한 별도 관측 파일이 있다면 생성 전에 `data/verifiedSegments.json`에 두면 됩니다. [보행 자료](source/seoulPedestrianRoutes.json)는 OpenStreetMap 보행 네트워크에서 역 사이 경로를 계산한 결과입니다. 신규 구간은 보행망 경로 거리와 초당 1.25m를 기준으로 시간을 추정합니다. 기존 광운대역 주변 표본은 [OSRM 보행 경로](https://routing.openstreetmap.de/about.html)의 추정치를 유지합니다. 원천 데이터와 파생 보행 자료에는 [© OpenStreetMap contributors, ODbL](https://www.openstreetmap.org/copyright)이 적용됩니다.
 
-목표 시간대는 한국시간 공휴일 제외 평일 08:00~09:00 정상 운행입니다. 서울교통공사 지하철 값은 출근 시간대 실측이 아닌 표준 운행시간입니다. 로컬 버스·도보 기록에는 조회 시각만 있어 목표 시간대와 지연 여부가 확인되지 않았습니다. JSON의 `timeBasis`가 근거를 구분하고 `verifiedForWeekdayMorning`이 해당 시간대 검증 여부를 표시합니다. 게임 이벤트 보정은 플레이 중 별도로 적용합니다.
+카탈로그에는 양방향 도보 경로가 확보된 간선만 포함합니다. 철도 연결과 석계역·광운대역 연결을 우선 유지합니다. 그 외에는 역마다 도보가 짧은 두 연결과 버스가 가장 빠른 연결을 골라 합칩니다. 다른 역에서 고른 연결도 같은 간선으로 합쳐집니다. 도보 선택 가능 여부는 라운드의 남은 시간과 체력으로 판정합니다.
+배포 서버에서는 완성된 `data/commuteSegments.json`을 설치하거나 `ROUTE_SEGMENTS_FILE`에 읽기 전용 카탈로그의 절대경로를 지정할 수 있습니다.
 
-`data/verifiedSegments.json`에 사용 가능한 방향별 버스·도보 기록이 있으면 생성기가 이를 합칩니다. 이 파일과 생성 결과는 로컬 전용입니다. 새 체크아웃에서 원본이 없으면 지하철 표준시간만 생성되므로 광운대역까지 이어지는 구간 및 지하철 중단 레벨의 플레이에 필요한 별도 자료를 준비해야 합니다. 실제 자료를 대신하는 모의값은 테스트에서만 사용합니다.
+버스는 [서울시 정류장 간 평균 운행시간](https://data.seoul.go.kr/dataList/OA-21217/A/1/datasetView.do)의 2026년 11월 9~13일 08시대 값을 사용합니다. [정류장 좌표](https://data.seoul.go.kr/dataList/OA-15067/S/1/datasetView.do)를 이용해 각 정류장을 약 250m 이내의 가장 가까운 게임 역에 연결합니다. 약 3km 이내 역 쌍에서 정류장 순서가 연속된 직행 기록을 사용합니다. 세 날짜 이상 기록이 있는 노선 중 관측일이 많은 후보를 우선하고, 관측일 수가 같으면 평균 탑승시간이 짧은 후보를 고릅니다. 노선 ID와 유형은 [노선 ID 파일](https://data.seoul.go.kr/dataList/OA-15262/A/1/datasetView.do)과 [노선 기본정보](https://data.seoul.go.kr/dataList/OA-15066/F/1/datasetView.do)를 대조합니다.
+
+정류장 간 원본 수치는 인접 정류장 값의 규모를 근거로 초 단위로 해석했습니다. 승차 전 도보와 하차 후 도보는 각각 게임용 3분입니다. 승차 대기와 실제 지연 여부는 기록에 포함되지 않습니다. 지하철은 표준 운행시간을 사용하며, 레벨별 이벤트 보정은 플레이 중 적용합니다.
+
+공개 자료만 사용한 별도 배포 파일은 `node tools/buildCommuteCatalog.cjs --public-only`로 생성합니다. 결과 파일은 `data/commuteSegments.public.json`이며 `ROUTE_SEGMENTS_FILE`에 지정하면 됩니다. 팀원은 이 생성 파일 대신 Git에 포함된 원본 데이터와 위 기본 실행 절차를 받아 같은 내용을 생성할 수 있습니다.
 
 ## 주요 기능
 
