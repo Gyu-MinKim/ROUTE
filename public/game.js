@@ -294,12 +294,14 @@ function render() {
   if (S.errand) { const en = S.nodes[S.errand.node]; h += `<text x="${en.x}" y="${en.y - 20}" font-size="26" pointer-events="none" text-anchor="middle" ${S.errand.done ? 'opacity=".45"' : ''}>${S.errand.icon}${S.errand.done ? '✔' : ''}</text>`; }
   h += `<circle id="mk" class="marker" pointer-events="none" cx="${markerPos.x}" cy="${markerPos.y}" r="11"/>`;
   map.innerHTML = h;
+  if (typeof kakaoMapRender === 'function') kakaoMapRender(); // 실제 지도(kakaoMap.js)도 같은 상태로 갱신
 }
 
 function moveMarker(a, b, ms, follow) {
   const movementToken = roundToken, replayId = replayTok;
   const mk = () => $('#mk');
-  if (settings.reduce) { markerPos = { x: b.x, y: b.y }; if (mk()) { mk().setAttribute('cx', b.x); mk().setAttribute('cy', b.y); } return Promise.resolve(); }
+  const kakaoStep = (k) => { if (typeof kakaoMarkerAt === 'function') kakaoMarkerAt(a, b, k, follow); }; // 실제 지도 현재 위치 동기화
+  if (settings.reduce) { markerPos = { x: b.x, y: b.y }; if (mk()) { mk().setAttribute('cx', b.x); mk().setAttribute('cy', b.y); } kakaoStep(1); return Promise.resolve(); }
   return new Promise((res) => {
     const t0 = performance.now();
     (function step(now) {
@@ -308,6 +310,7 @@ function moveMarker(a, b, ms, follow) {
       markerPos = { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k };
       const m = mk();
       if (m) { m.setAttribute('cx', markerPos.x); m.setAttribute('cy', markerPos.y); }
+      kakaoStep(k);
       if (follow) { vb.x = markerPos.x - vb.w / 2; vb.y = markerPos.y - vb.h / 2; setVB(); }
       if (k < 1) requestAnimationFrame(step); else res();
     })(t0);

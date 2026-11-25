@@ -386,3 +386,79 @@ footer { grid-template-columns:minmax(0,1fr) auto; }
   white-space: nowrap;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
+/* ── 실제 지도: 역 이름표 상태 (kakaoMap.js styleNodeLabels) ── */
+.kakao-node-label { cursor:default; transition:transform .12s ease; }
+.kakao-node-label.is-reachable { cursor:pointer; border:2px solid #16A34A; background:#DCFCE7; color:#111827; }
+.kakao-node-label.is-reachable:hover,
+.kakao-node-label.is-reachable:focus-visible { transform:translateY(-2px); outline:none; box-shadow:0 0 0 3px rgba(22,163,74,.35); }
+.kakao-node-label.is-selected { border:2px solid #F59E0B; background:#FEF3C7; color:#111827; }
+.kakao-node-label.is-current { border:2px solid #2563EB; background:#DBEAFE; color:#111827; font-weight:800; }
+.kakao-node-label.is-visited:not(.is-reachable):not(.is-selected) { background:#FEE2E2; color:#111827; }
+.kakao-node-label.is-disabled { opacity:.78; }
+.kakao-node-label.is-start::before { content:'🏠 '; }
+.kakao-node-label.is-dest::before { content:'🚩 '; }
+.kakao-node-label.is-transfer::after {
+  content:'환승'; margin-left:5px; padding:0 4px; border-radius:4px;
+  background:#111827; color:#fff; font-size:10px; font-weight:700; vertical-align:1px;
+}
+.kakao-node-label.is-errand { border-style:dashed; }
+.kakao-node-label.is-errand-done { text-decoration:none; opacity:.85; }
+
+/* 실제 지도: 현재 위치 */
+.kakao-current {
+  width:18px; height:18px; border-radius:50%;
+  background:var(--accent); border:3px solid #fff;
+  box-shadow:0 0 0 2px var(--accent), 0 2px 6px rgba(0,0,0,.35);
+  pointer-events:none; animation:kakao-pulse 1.6s ease-out infinite;
+}
+.kakao-current.is-replay { background:var(--opt); box-shadow:0 0 0 2px var(--opt), 0 2px 6px rgba(0,0,0,.35); }
+@keyframes kakao-pulse {
+  0% { box-shadow:0 0 0 2px var(--accent), 0 0 0 0 rgba(150,62,72,.45); }
+  100% { box-shadow:0 0 0 2px var(--accent), 0 0 0 14px rgba(150,62,72,0); }
+}
+
+/* 실제 지도: 이동 가능 구간의 수단별 소요 시간 */
+.kakao-mode-badge {
+  display:flex; gap:3px; padding:2px; border-radius:999px;
+  background:var(--panel); border:1px solid var(--line);
+  box-shadow:0 2px 6px rgba(0,0,0,.18); cursor:pointer; white-space:nowrap;
+}
+.kakao-mode-badge.is-selected { border:2px solid #F59E0B; }
+.kakao-mode-badge:focus-visible { outline:3px solid #F59E0B; outline-offset:2px; }
+.kakao-mode-chip {
+  display:inline-flex; align-items:center; gap:2px; min-height:22px; padding:0 6px;
+  border-radius:999px; border-left:4px solid var(--chip); background:var(--bg);
+  color:var(--ink); font-size:12px; font-weight:700;
+}
+.kakao-mode-chip.is-off { opacity:.4; text-decoration:line-through; }
+
+/* 실제 지도: 범례 */
+.kakao-legend {
+  position:absolute; top:12px; right:12px; z-index:7; max-width:180px;
+  padding:6px 10px; border:1px solid var(--line); border-radius:10px;
+  background:var(--panel); color:var(--ink); font-size:12px; box-shadow:0 2px 8px rgba(0,0,0,.15);
+}
+.map-wrap:not(.kakao-active) .kakao-legend { display:none; }
+.kakao-legend summary { cursor:pointer; font-weight:700; }
+.kakao-legend ul { list-style:none; margin:6px 0 0; padding:0; display:grid; gap:4px; }
+.kakao-legend li { display:flex; align-items:center; gap:6px; }
+.kakao-swatch { flex:0 0 26px; height:0; border-top:4px solid var(--swatch); }
+.kakao-swatch.thick { border-top-width:7px; opacity:.85; }
+.kakao-swatch.dash { border-top-style:dashed; }
+.kakao-swatch.dot { border-top-style:dotted; }
+.kakao-swatch.arrow { border:0; height:auto; text-align:center; }
+.kakao-swatch.arrow::before { content:'➜'; font-size:13px; }
+
+/* 실제 지도에서도 이벤트 배너가 지도 위에 보이도록 */
+.map-wrap.kakao-active .event-banner { z-index:7; }
+
+@media (max-width:800px) {
+  .kakao-node-label { font-size:11px; padding:3px 7px; }
+  .kakao-mode-chip { min-height:26px; font-size:11px; }
+  .kakao-legend { top:auto; bottom:12px; right:8px; font-size:11px; max-width:150px; }
+}
+body.reduce .kakao-current { animation:none; }
+@media (prefers-reduced-motion: reduce) {
+  .kakao-current { animation:none; }
+  .kakao-node-label { transition:none; }
+}
