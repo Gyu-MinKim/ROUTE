@@ -89,11 +89,20 @@ test('stored maps complete levels 1 through 15 without a key or live request', a
     assert.deepEqual(await start(id), { status: 503, body: { error: 'verified_data_missing' } });
   }
   fs.copyFileSync(path.join(root, 'data', 'seoulMetroTimes.json'), path.join(runtime, 'data', 'seoulMetroTimes.json'));
-  fs.writeFileSync(path.join(runtime, 'data', 'commuteSegments.json'), JSON.stringify({ version: 1, segments: mapFor(1).edges }));
+  const segments = mapFor(1).edges;
+  const morningBus = { ...mockBus, seconds: 553, timeBasis: 'weekday_08h_ride_with_assumed_walk' };
+  const morningStation = "gongneung";
+  segments.push({ from: morningStation, to: spine.at(-1), forward: { bus: morningBus }, reverse: {} });
+  fs.writeFileSync(path.join(runtime, 'data', 'commuteSegments.json'), JSON.stringify({ version: 1, segments }));
   const levels = E.cfg.levels;
   for (const { id } of levels) {
     const opened = await start(id);
     assert.equal(opened.status, 200, JSON.stringify(opened.body));
+    const morningOrigin = opened.body.nodes.find(node => node.stationId === morningStation);
+    assert.ok(morningOrigin);
+    const morningEdge = opened.body.edges.find(edge => edge.a === morningOrigin.id && edge.b === opened.body.dest);
+    assert.equal(morningEdge.directionalOpts.forward.bus, 10);
+    assert.equal(morningEdge.directionalOpts.reverse.bus, null);
     const weights = await api('/api/kakao/weights?sessionId=' + opened.body.sessionId);
     assert.equal(weights.body.appliedToGame, true);
     assert.equal(requests, 0);

@@ -1,0 +1,84 @@
+{
+  "source": "https://data.seoul.go.kr/dataList/OA-21217/A/1/datasetView.do",
+  "archive": "seoul-bus-week.zip",
+  "sha256": "4233f6e1a8b3f8954900ca191923d5c525eb9fa57e89312cca3fa607b469df4c",
+  "routeId": "100100043",
+  "stopIds": [
+    "110000356",
+    "110000182",
+    "110000180",
+    "110000179"
+  ],
+  "timezone": "Asia/Seoul",
+  "sourceField": "운행시간_08시",
+  "samples": [
+    {
+      "date": "2026-11-09",
+      "linkValues": [
+        37,
+        66,
+        95
+      ],
+      "sum": 198
+    },
+    {
+      "date": "2026-11-10",
+      "linkValues": [
+        45,
+        59,
+        85
+      ],
+      "sum": 189
+    },
+    {
+      "date": "2026-11-11",
+      "linkValues": [
+        43,
+        67,
+        108
+      ],
+      "sum": 218
+    },
+    {
+      "date": "2026-11-12",
+      "linkValues": [
+        37,
+        52,
+        84
+      ],
+      "sum": 173
+    },
+    {
+      "date": "2026-11-13",
+      "linkValues": [
+        39,
+        65,
+        80
+      ],
+      "sum": 184
+    }
+  ],
+  "completeDayCount": 5,
+  "meanOfCompleteDays": 192.4,
+  "includesWalk": false,
+  "includesWaiting": false,
+  "disruptionsVerified": false,
+  "gameSegment": {
+    "from": "seokgye",
+    "to": "gwangundae",
+    "accessWalkSeconds": 180,
+    "egressWalkSeconds": 180,
+    "walkBasis": "game_assumption",
+    "rideTimeUnit": "seconds",
+    "rideTimeUnitBasis": "inferred_from_adjacent_stop_values",
+    "fare": {
+      "cardBaseFare": 1500,
+      "evidence": {
+        "url": "https://sftc.seoul.go.kr/seoul/mulga/main/contents.do?menuNo=200022",
+        "observedAt": "2026-11-24"
+      }
+    },
+    "routeNumber": "261",
+    "routeTypeSource": "https://data.seoul.go.kr/dataList/OA-15066/F/1/datasetView.do"
+  }
+}

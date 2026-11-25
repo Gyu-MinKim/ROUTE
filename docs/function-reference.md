@@ -5,11 +5,13 @@
 | 파일 | 역할 |
 | --- | --- |
 | [`lib/engine.js`](../lib/engine.js) | 게임 규칙과 계산 |
+| [`lib/segmentRounds.js`](../lib/segmentRounds.js) | 공개 철도 간선과 실제 지도 라운드 생성 |
+| [`public/kakaoMap.js`](../public/kakaoMap.js) | 실제 지도 역·간선·경유지 표시 |
 | [`server.js`](../server.js) | 상태 관리, 판정, API |
 | [`public/game.js`](../public/game.js) | 화면과 조작 |
 | [`public/ui.js`](../public/ui.js) | 접근성 |
 
-발표에서 가장 중요한 함수는 `solveOptimal`(최적 경로 탐색), `quote`(요금·환승), `staminaCost`(체력), `POST /api/simulate/step`(서버 판정) 네 가지다.
+라운드 생성부터 확인할 때는 `newRound` 또는 `newSegmentRound`에서 시작한다. 이동 규칙은 `movement`와 `movesFrom`을 확인하고, 기준 경로는 `solveOptimal`을 따라가면 된다.
 
 ## 1. 게임 엔진 `lib/engine.js`
 
@@ -21,7 +23,9 @@
 | `roundParams` | 라운드별 지도 크기, 자금, 시간 여유, 버스 등장, 도보 불가 비율 결정 |
 | `describeRound` | 이전 라운드 대비 바뀐 점을 문장으로 생성 |
 | `edgeTimes` | 거리로 수단별 이동 시간 계산, 비 오는 날 시간 증가 반영 |
-| `buildGraph` | 역(노드)과 구간(간선)을 격자로 배치하고 구간별 수단 결정 |
+| `buildLegacyGraph` | 기본 지도 모드의 격자와 수단별 게임 시간 생성 |
+| `publicRailSegments` | 공개 표준 운행시간을 실제 호선·역 순서와 매칭 |
+| `newSegmentRound` | 저장된 간선에서 실제 역을 골라 플레이 가능한 라운드 생성 |
 | `other` | 간선의 반대쪽 역 반환 |
 | `hopDistance` | BFS로 출발-도착 칸 수 계산 |
 | `newRound` | 한 판 생성. 풀 수 있는지 검사하고 사건 시각, 심부름 역, 제한 시간 결정 |
@@ -30,7 +34,8 @@
 
 | 함수 | 설명 |
 | --- | --- |
-| `quote` | 한 번 이동의 시간·요금·환승 여부 계산 (환승이면 무료, +3분) |
+| `movement`, `movesFrom` | 방향별 데이터와 현재 상태로 이동 견적 계산. 같은 목적지·수단은 시간이 짧고 비용이 적은 후보 우선 |
+| `quote` | 기본 격자에서 한 번 이동의 시간·요금·환승 여부 계산 (환승이면 무료, +3분) |
 | `nextRem` | 이동 후 남은 환승 가능 시간 계산 |
 | `staminaCost` | 수단별 체력 소모 계산 (도보가 가장 큼, 부상 시 2배) |
 | `stamUnits` | 탐색용으로 체력을 5 단위로 묶음 |
@@ -41,7 +46,7 @@
 | 함수 | 설명 |
 | --- | --- |
 | `Heap` | 직접 구현한 최소 힙 (`push`, `pop`) |
-| `solveOptimal` | 다익스트라. 돈·환승·체력·심부름 조건을 지키며 가장 빨리 도착하는 경로 탐색 |
+| `solveOptimal`, `solveVerified` | 상태 확장 다익스트라. 기본 격자와 실제 이동 자료에 맞는 상태를 사용 |
 
 ### 평가
 
@@ -83,7 +88,8 @@
 | 경로 | 설명 |
 | --- | --- |
 | `GET /api/routes` | 수단, 캐릭터, 레벨, 캠페인 목록 |
-| `GET /api/history` | 전체 플레이 수, 클리어 수, 최고 라운드 |
+| `GET /api/history` | 파일에 보관된 종료 건수, 성공 건수, 성공한 무한 모드 최고 라운드 |
+| `GET /api/kakao/weights` | 세션의 저장된 기본 가중치 확인 |
 | `POST /api/simulate/start` | 게임 시작 |
 | `POST /api/simulate/step` | 한 칸 이동. 입력 검증과 판정 |
 | `POST /api/simulate/retry` | 같은 지도로 재도전 |

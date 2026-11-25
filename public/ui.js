@@ -78,11 +78,12 @@
     document.getElementById('selection-route').textContent = busy ? '여정을 준비하고 있어요…' : S.status !== 'active' ? '여정을 마쳤어요' : sel == null ? '이동할 역을 선택하세요' : `${S.nodes[S.cur].name} → ${S.nodes[sel].name}`;
     document.getElementById('selection-step').textContent = S.status !== 'active' ? 'JOURNEY COMPLETE' : sel == null ? '01 / 역 선택' : busy ? '이동 중…' : '02 / 이동 수단 선택 · 누르면 바로 이동';
     document.getElementById('btn-clear-selection').classList.toggle('hidden', sel == null || busy);
-    const optionsKey = `${S.cur}:${sel}:${S.status}:${busy}`;
+    const available = availableDestinations();
+    const optionsKey = `${S.sessionId}:${S.cur}:${sel}:${S.status}:${busy}:${available.join(",")}`;
     if (stationOptionsKey !== optionsKey) {
       const options = document.getElementById('station-options');
       options.replaceChildren();
-      if (S.status === 'active') adjacent(S.cur).forEach((id) => {
+      available.forEach((id) => {
         const button = document.createElement('button');
         button.className = 'btn small station-option' + (id === sel ? ' selected' : '');
         button.textContent = S.nodes[id].name;
@@ -94,9 +95,6 @@
       stationOptionsKey = optionsKey;
     }
     const playing = S.status === 'active' && !busy;
-    const available = playing ? Object.entries(S.quotes)
-      .filter(([, quote]) => !moveUnavailable(quote))
-      .map(([key]) => Number(key.split(':')[0])) : [];
     const noMoves = playing && available.length === 0;
     const selectedBlocked = playing && sel != null && !available.includes(sel);
     const giveup = document.getElementById('btn-giveup');

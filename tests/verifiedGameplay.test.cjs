@@ -144,7 +144,7 @@ test('offline start and move use stored weights even with the old live setting',
     assert.equal(weights.body.loaded, initial.edges.length);
     const scenario = E.cfg.levels.find(level => level.id === levelId);
     const g = { ...initial, adj: initial.nodes.map(() => []), verifiedWeights: weights.body.baseWeights,
-      mods: scenario.mods, busEnabled: E.roundParams(scenario.round).busEnabled };
+      mods: scenario.mods, busEnabled: initial.edges.some(edge => edge.opts.bus != null) };
     for (const edge of g.edges) {
       g.adj[edge.a].push(edge);
       g.adj[edge.b].push(edge);

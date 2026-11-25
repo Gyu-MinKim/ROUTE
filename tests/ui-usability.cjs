@@ -82,7 +82,7 @@ let count=0;const ok=t=>{count++;console.log('PASS',t);};
  await click('#btn-play'); assert.match(el('#modal-title').textContent,/Level 1/); await click(action('시작하기'));
  assert.equal(run('S.status'),'active'); assert.equal(el('#game').classList.contains('active'),true);assert.match(el('#modal-title').textContent,/첫 등교/);ok('recommended level starts through one mission briefing');
  await click('#modal-close'); assert.equal(el('#modal').classList.contains('hidden'),true);assert.equal(run('busy'),false);assert.equal(el('#game').inert,false);ok('briefing close releases gameplay and inert state');
- const id=run('adjacent(S.cur)[0]'); await click(el(`#map [data-id="${id}"] .label`));assert.equal(run('sel'),id);assert.equal(el('#station-options').children.length,run('adjacent(S.cur).length'));assert.match(el('#selection-route').textContent,/→/);ok('station name selects the route and updates destination');
+ const id=run('availableDestinations()[0]'); await click(el(`#map [data-id="${id}"] .label`));assert.equal(run('sel'),id);assert.equal(el('#station-options').children.length,run('availableDestinations().length'));assert.match(el('#selection-route').textContent,/→/);ok('station name selects the route and updates destination');
  const mode=run(`MODE_ORDER.find(m=>S.quotes[\`${id}:\${m}\`]&&!moveUnavailable(S.quotes[\`${id}:\${m}\`]))`);assert.ok(mode);
  assert.equal(el('#btn-go'),null);assert.equal(el(`[data-mode="${mode}"]`).disabled,false);assert.match(el(`[data-mode="${mode}"]`).textContent,/분/);assert.match(el('#map .mode-tag').textContent,/\d/);assert.match(el('#selection-step').textContent,/바로 이동/);ok('transport cards show costs, edges show minutes, and no confirm button exists');
  {const before=run('S.path.length');await click(`[data-mode="${mode}"]`);assert.equal(run('S.path.length'),before);assert.equal(run('sel'),id);ok('card press right after station selection is ignored (misclick guard)');run('MOVE_GUARD_MS=0');}
@@ -92,11 +92,12 @@ let count=0;const ok=t=>{count++;console.log('PASS',t);};
  await click('#modal-close');await click('#btn-resume');
  run('S.quotes[`${sel}:walk`]={time:S.limit+1,cost:0,stam:0}; updateFooter()');assert.equal(el('[data-mode="walk"]').disabled,true);assert.match(el('[data-mode="walk"]').textContent,/초과/);{const before=run('S.path.length');await run('moveBy("walk")');assert.equal(run('S.path.length'),before);}ok('time-overrun reason is explicit and cannot be moved');
  // Reproduce a blocked station with another option, then a round with no affordable moves.
- run('globalThis.blockedQuotes = Object.fromEntries(Object.keys(S.quotes).map(key => [key, {time:S.limit+1,cost:0,stam:0}])); S.quotes={...blockedQuotes, [sel+":walk"]:{time:S.limit+1,cost:0,stam:0}}; const alternate=adjacent(S.cur).find(id=>id!==sel); if(alternate!=null) S.quotes[alternate+":walk"]={time:1,cost:0,stam:0}; updateFooter()');
+ run('globalThis.blockedQuotes = Object.fromEntries(Object.keys(S.quotes).map(key => [key, {time:S.limit+1,cost:0,stam:0}])); S.quotes={...blockedQuotes, [sel+":walk"]:{time:S.limit+1,cost:0,stam:0}}; const alternate=S.edges.filter(e=>e.a===S.cur || e.b===S.cur).map(e=>e.a===S.cur?e.b:e.a).find(id=>id!==sel); if(alternate!=null) S.quotes[alternate+":walk"]={time:1,cost:0,stam:0}; updateFooter()');
  if (run('alternate!=null')) {
   assert.match(el('#move-warning').textContent,/선택한 역으로 갈 수 없어요/);
   assert.ok(el('#move-warning').textContent.includes(run('S.nodes[alternate].name')));
  }
+ assert.ok(![...el('#station-options').children].some(button => button.textContent === run('S.nodes[sel].name')));
  assert.equal(el('#btn-giveup').classList.contains('primary'),true);
  run('S.quotes=blockedQuotes; sel=null; updateFooter()');
  assert.match(el('#move-warning').textContent,/이동할 수 있는 역이 없어요/);
@@ -128,7 +129,7 @@ let count=0;const ok=t=>{count++;console.log('PASS',t);};
  await run("ctx={kind:'level',levelId:5,round:1}; startRound()");await settle();assert.ok(run('S.event'));assert.equal(el('#event-banner').classList.contains('hidden'),false);assert.ok(el('#modal-body').textContent.includes(run('S.event.text')));await click('#modal-close');ok('traffic event forecast is visible in briefing and map banner');
  await click('#btn-giveup');await click(action('포기'));await click('#modal-close');await click('#btn-retry');assert.equal(run('S.status'),'active');assert.equal(el('#modal').classList.contains('hidden'),true);ok('comparison retry skips repeated intro');
  // Resource failures explain their cause and survive keyboard selection.
- const target=run('adjacent(S.cur)[0]');const station=el(`#map [data-id="${target}"]`);station.dispatchEvent(Object.assign(new window.Event('keydown',{bubbles:true}),{key:'Enter'}));await settle();assert.equal(run('sel'),target);ok('keyboard can select a reachable station');
+ const target=run('availableDestinations()[0]');const station=el(`#map [data-id="${target}"]`);station.dispatchEvent(Object.assign(new window.Event('keydown',{bubbles:true}),{key:'Enter'}));await settle();assert.equal(run('sel'),target);ok('keyboard can select a reachable station');
  run("S.quotes[`${sel}:subway`]={time:1,cost:S.resLeft+300,stam:0};S.quotes[`${sel}:bus`]={time:1,cost:0,stam:S.stamina.left+4};updateFooter()");assert.match(el('[data-mode="subway"]').textContent,/300.*부족/);assert.match(el('[data-mode="bus"]').textContent,/체력 4 부족/);ok('unavailable transport explains money and stamina shortages');
  document.dispatchEvent(Object.assign(new window.Event('keydown',{bubbles:true}),{key:'Escape'}));assert.equal(run('sel'),null);ok('Escape clears selection');
  console.log(`\n${count} checks passed; ${calls.length} API calls used real Express handlers without opening a port.`);

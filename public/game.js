@@ -244,12 +244,17 @@ function makeDeco() {
 }
 
 const eb = (a, b) => S.edges.find((e) => (e.a === a && e.b === b) || (e.a === b && e.b === a));
-const adjacent = (n) => S.edges.filter((e) => e.a === n || e.b === n).map((e) => (e.a === n ? e.b : e.a));
+function availableDestinations() {
+  if (S?.status !== 'active') return [];
+  return [...new Set(Object.entries(S.quotes)
+    .filter(([, quote]) => !moveUnavailable(quote))
+    .map(([key]) => Number(key.split(':')[0])))];
+}
 const ln = (a, b, cls) => { const A = S.nodes[a], B = S.nodes[b]; return `<line class="edge ${cls}" x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}"/>`; };
 
 function render() {
   if (!S) return;
-  const reach = S.status === 'active' ? new Set(adjacent(S.cur)) : new Set();
+  const reach = new Set(availableDestinations());
   let h = '';
   h += `<rect x="${WORLD.x}" y="${WORLD.y}" width="${WORLD.w}" height="${WORLD.h}" fill="var(--map)" pointer-events="none"/>`;
   h += deco.roads.map((l) => `<line x1="${l.x1}" y1="${l.y1}" x2="${l.x2}" y2="${l.y2}" stroke="var(--edge)" stroke-opacity=".35" stroke-width="10"/>`).join('');
@@ -375,7 +380,8 @@ function updateFooter() {
 const evEffect = (ev) => (ev.off ? `${MODES[ev.mode].name} 이용 불가` : `${MODES[ev.mode].name} 시간 ×${ev.mul}`);
 function missionSub() {
   let h = S.scenario ? S.scenario.text : '';
-  if (S.usesSegmentTimes) h += '<p class="muted">등교 기준은 평일 08:00~09:00예요. 지하철은 표준 운행시간, 버스·도보는 오전 시간대·지연 여부가 확인되지 않은 구간 관측값을 사용해요.</p>';
+  if (S.usesSegmentTimes) h += '<p class="muted">등교 기준은 평일 08:00~09:00예요. 지하철은 표준 운행시간, 버스·도보는 구간별 관측값을 사용하며, 일부 버스 구간에는 승차 전과 하차 후 도보 3분씩을 적용해요.</p>';
+  if (S.usesSegmentTimes) h += '<p class="muted">일부 도보 경로 추정에 <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a> 자료를 사용해요.</p>';
   if (S.errand) h += `<div class="errand ${S.errand.done ? 'done' : ''}">${S.errand.icon} ${S.errand.goal} ${S.errand.done ? '✔' : '(지도의 ' + S.errand.icon + ' 역)'}</div>`;
   if (S.goals) h += goalsHtml(S.goals);
   return h;
@@ -471,7 +477,7 @@ map.addEventListener('click', (ev) => {
   if (!t && !dragged && sel != null && !busy) { sel = null; selMode = null; render(); updateFooter(); return; }   // 빈 곳을 누르면 선택 해제
   if (dragged || !t || !S || S.status !== 'active' || busy) return;
   const id = Number(t.dataset.id);
-  if (!adjacent(S.cur).includes(id)) return;
+  if (!availableDestinations().includes(id)) return;
   sel = id; selMode = null; selAt = Date.now(); render(); updateFooter();
   map.querySelector(`[data-id="${id}"]`)?.focus({ preventScroll: true });
 });
