@@ -42,7 +42,7 @@ function setup() {
     if (!match) return null;
     return { dispatchEvent: () => clicks.push(Number(match[1])) };
   };
-  const status = { notifications: [], updateCount: 0, boundsSet: 0, markers: [], lines: [] };
+  const status = { notifications: [], updateCount: 0, boundsSet: 0, markers: [], lines: [], overlays: [] };
   const listeners = {};
   class MapStub { relayout() {} setBounds() { status.boundsSet++; } }
   class MarkerStub {
@@ -50,12 +50,12 @@ function setup() {
     setMap(map) { this.map = map; }
   }
   class OverlayStub {
-    constructor({ content }) { this.content = content; }
+    constructor({ content }) { this.content = content; status.overlays.push(this); }
     setMap(map) { this.map = map; }
     getContent() { return this.content; }
   }
   class LineStub {
-    constructor({path}) { this.path = path; status.lines.push(this); }
+    constructor(options) { this.path = options.path; this.options = options; status.lines.push(this); }
     setMap(map) { this.map = map; }
   }
   class BoundsStub { extend() {} }
@@ -141,4 +141,64 @@ test('실제 지도에서 이동수단이 모두 막힌 연결역을 선택할 �
   x.state.available = [];
   vm.runInContext('selectKakaoNode(1)', x.context);
   assert.deepEqual(x.clicks, []);
+});
+
+test('실제 지도에서 노선 색·버스/도보 선 모양·한 방향 구간을 구분한다', async () => {
+  const x = setup();
+  x.state.edges = [
+    { id: 0, a: 0, b: 1, lineId: '4', opts: { subway: 3, bus: null, walk: 20 } },
+    { id: 1, a: 1, b: 2, lineId: null, opts: { subway: null, bus: 5, walk: null },
+      directionalOpts: { forward: { subway: null, bus: 5, walk: null }, reverse: { subway: null, bus: null, walk: null } } },
+  ];
+  await vm.runInContext('showKakaoMap()', x.context);
+  const lines = x.status.lines.map((line) => line.options);
+  assert.equal(lines.length, 3);
+  assert.equal(lines[0].strokeColor, '#00A5DE');
+  assert.equal(lines[0].strokeStyle, 'solid');
+  assert.equal(lines[1].strokeStyle, 'shortdot');
+  assert.equal(lines[2].strokeStyle, 'shortdash');
+  assert.equal(lines[2].endArrow, true);
+  assert.equal(lines[0].endArrow, false);
+});
+
+test('실제 지도에서 이동 가능 구간의 수단별 시간을 보여 주고 누르면 역을 선택한다', async () => {
+  const x = setup();
+  x.state.edges = [{ id: 0, a: 0, b: 1, lineId: '4', opts: { subway: 3, bus: null, walk: 20 } }];
+  x.state.quotes = { '1:subway': { time: 3, cost: 1400 }, '1:walk': { time: 20, cost: 0 } };
+  await vm.runInContext('showKakaoMap()', x.context);
+  const badge = x.status.overlays.map((o) => o.content).find((el) => /kakao-mode-badge/.test(el.className));
+  assert.ok(badge);
+  assert.match(badge.innerHTML, /🚇3/);
+  assert.match(badge.innerHTML, /🚶20/);
+  badge.dispatchEvent({ type: 'click' });
+  assert.deepEqual(x.clicks, [1]);
+});
+
+test('실제 지도 이름표에 출발·도착·현재 위치·환승역 상태를 표시한다', async () => {
+  const x = setup();
+  x.state.nodes[1].isTransfer = true;
+  await vm.runInContext('showKakaoMap()', x.context);
+  const cls = (id) => vm.runInContext(`nodeLabels[${id}].getContent().className`, x.context);
+  assert.match(cls(0), /is-start/);
+  assert.match(cls(0), /is-current/);
+  assert.match(cls(1), /is-transfer/);
+  assert.match(cls(1), /is-reachable/);
+  assert.match(cls(2), /is-dest/);
+  assert.match(cls(2), /is-disabled/);
+});
+
+test('결과 화면에서 내 경로와 최적 경로를 실제 지도에 겹쳐 그리고 범위를 맞춘다', async () => {
+  const x = setup();
+  await vm.runInContext('showKakaoMap()', x.context);
+  const before = x.status.lines.length;
+  x.state.status = 'success';
+  x.state.path = [{ from: 0, to: 1, mode: 'walk' }];
+  x.context.overlay = { my: x.state.path, opt: [{ from: 0, to: 1, mode: 'subway' }, { from: 1, to: 2, mode: 'bus' }] };
+  x.listeners['route:ui']();
+  const added = x.status.lines.slice(before).map((line) => line.options);
+  assert.equal(added.filter((o) => o.strokeColor === '#963E48').length, 2);
+  assert.equal(added.filter((o) => o.strokeColor === '#526E85').length, 1);
+  assert.equal(x.status.boundsSet, 2);
+  x.listeners['route:ui']();
+  assert.equal(x.status.boundsSet, 2); // 같은 결과 화면에서는 범위를 다시 맞추지 않음
 });
