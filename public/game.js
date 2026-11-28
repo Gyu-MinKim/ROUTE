@@ -49,8 +49,33 @@ function layoutGeo(state) {
   const dx = Math.max((lng1 - lng0) * c, 1e-6), dy = Math.max(lat1 - lat0, 1e-6);
   const k = Math.min((W - 2 * PAD) / dx, (H - 2 * PAD) / dy);
   const ox = (W - dx * k) / 2, oy = (H - dy * k) / 2;
-  state.geo = { c, k, ox, oy, lng0, lat1 };
-  state.nodes.forEach((n) => { n.x = Math.round(ox + (n.lng - lng0) * c * k); n.y = Math.round(oy + (lat1 - n.lat) * k); });
+  const pts = state.nodes.map((n) => ({ x: ox + (n.lng - lng0) * c * k, y: oy + (lat1 - n.lat) * k }));
+  spreadPoints(pts, 90);
+  // 간격 조정 후 다시 화면에 맞춤 (배경도 같은 비율로)
+  const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
+  const x0 = Math.min(...xs), y0 = Math.min(...ys), bw = Math.max(Math.max(...xs) - x0, 1), bh = Math.max(Math.max(...ys) - y0, 1);
+  const f = Math.min((W - 2 * PAD) / bw, (H - 2 * PAD) / bh);
+  const tx = (W - bw * f) / 2 - x0 * f, ty = (H - bh * f) / 2 - y0 * f;
+  state.geo = { c, k: k * f, ox: ox * f + tx, oy: oy * f + ty, lng0, lat1 };
+  state.nodes.forEach((n, i) => { n.x = Math.round(pts[i].x * f + tx); n.y = Math.round(pts[i].y * f + ty); });
+}
+// 가까운 역끼리 최소 간격 확보
+function spreadPoints(pts, minGap) {
+  for (let round = 0; round < 40; round++) {
+    let moved = false;
+    for (let i = 0; i < pts.length; i++) {
+      for (let j = i + 1; j < pts.length; j++) {
+        let dx = pts[j].x - pts[i].x, dy = pts[j].y - pts[i].y, d = Math.hypot(dx, dy);
+        if (d >= minGap) continue;
+        if (d < 0.01) { dx = 1; dy = 0; d = 1; }
+        const push = (minGap - d) / 2, ux = dx / d, uy = dy / d;
+        pts[i].x -= ux * push; pts[i].y -= uy * push;
+        pts[j].x += ux * push; pts[j].y += uy * push;
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
 }
 const geoPoint = (g, lat, lng) => [Math.round((g.ox + (lng - g.lng0) * g.c * g.k) * 10) / 10, Math.round((g.oy + (g.lat1 - lat) * g.k) * 10) / 10];
 function smoothPath(pts, closed) {
@@ -284,7 +309,6 @@ $('#z-in').onclick = () => zoomBy(0.75);
 $('#z-out').onclick = () => zoomBy(1.33);
 
 
-const eb = (a, b) => S.edges.find((e) => (e.a === a && e.b === b) || (e.a === b && e.b === a));
 function availableDestinations() {
   if (S?.status !== 'active') return [];
   return [...new Set(Object.entries(S.quotes)
@@ -317,13 +341,6 @@ function render() {
     overlay.my.forEach((st) => { h += ln(st.from, st.to, 'my'); });
     overlay.opt.forEach((st) => { h += ln(st.from, st.to, 'opt'); });
   }
-  // 수단별 소요 시간은 선택한 역의 구간에만 표시
-  [...reach].filter((n) => n === sel).forEach((n) => {
-    const e = eb(S.cur, n), A = S.nodes[S.cur], B = S.nodes[n];
-    // 지금 탈 수 없는 수단은 흐리게
-    const tags = MODE_ORDER.filter((m) => S.quotes[`${n}:${m}`]).map((m) => { const q = S.quotes[`${n}:${m}`]; return `<tspan ${moveUnavailable(q) ? 'opacity=".4"' : ''}>${MODES[m].icon}${q.time}</tspan>`; }).join(' ');
-    h += `<text class="mode-tag" x="${(A.x + B.x) / 2}" y="${(A.y + B.y) / 2 - 6}">${tags}</text>`;
-  });
   h += S.nodes.map((n) => {
     const cls = ['node'];
     if (reach.has(n.id)) cls.push('reach');
@@ -407,7 +424,7 @@ function placeModes() {
   const m = map.getScreenCTM(); if (!m) return;
   const p = map.createSVGPoint(); p.x = S.nodes[sel].x; p.y = S.nodes[sel].y;
   const s = p.matrixTransform(m), r = wrap.getBoundingClientRect();
-  const x = s.x - r.left, y = s.y - r.top, w = modesEl.offsetWidth, h = modesEl.offsetHeight, gap = 26;
+  const x = s.x - r.left, y = s.y - r.top, w = modesEl.offsetWidth, h = modesEl.offsetHeight, gap = 20;
   const left = x + gap + w <= r.width - 8 ? x + gap : x - gap - w;   // 오른쪽에 자리가 없으면 왼쪽
   modesEl.style.left = Math.max(8, Math.min(r.width - w - 8, left)) + 'px';
   modesEl.style.top = Math.max(8, Math.min(r.height - h - 8, y - h / 2)) + 'px';
@@ -703,7 +720,7 @@ async function replay() {
 
 /* ── 튜토리얼 ── */
 const TUT = [
-  '① 테두리가 강조된 역이나 역 이름을 누르면 구간 위에 수단별 소요 시간(분)과 수단 카드가 떠요. 카드를 누르면 바로 이동해요. (이동은 되돌릴 수 없어요 · 단축키 1 2 3)',
+  '① 테두리가 강조된 역이나 역 이름을 누르면 수단 카드에 소요 시간(분)과 요금이 나와요. 카드를 누르면 바로 이동해요. (이동은 되돌릴 수 없어요 · 단축키 1 2 3)',
   '② 이동 자금(원)은 한정되어 있어요. 지하철·버스는 탈 때마다 요금이 나가고, 도보는 무료예요.',
   '③ 하차 후 30분 이내에 다시 지하철·버스를 타면 환승 무료(+3분). 너무 오래 걸으면 환승이 불가해져 요금을 다시 내요!',
   '④ 제한 시간 안에 🚩에 도착하세요. 최적 경로와 비교해 등급이 매겨져요.',
@@ -816,7 +833,7 @@ function helpBody(tab) {
     return `<ul class="help-legend">
       <li><i class="lg-dot cur"></i>현재 위치</li><li><i class="lg-dot reach"></i>지금 이동할 수 있는 역</li><li>⌂ 출발 · ⚑ 목적지</li>
       <li><i class="lg-line subway"></i>🚇 지하철 — 실제 지도 모드에서는 호선 색</li><li><i class="lg-line bus"></i>🚌 버스</li><li><i class="lg-line walk"></i>🚶 도보</li>
-      <li>역을 누르면 구간 위에 소요 시간(분)이 떠요 · 지금 갈 수 있는 구간만 진하게 보여요</li>
+      <li>역을 누르면 수단 카드에 소요 시간(분)이 나와요 · 지금 갈 수 있는 구간만 진하게 보여요</li>
       <li>흐린 수단은 지금 탈 수 없어요 (시간·교통비·체력 부족 또는 운행 중단)</li></ul>`;
   }
   const real = !!S?.usesSegmentTimes;
