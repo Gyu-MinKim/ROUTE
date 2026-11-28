@@ -65,18 +65,16 @@
     document.getElementById('resume-note').classList.toggle('hidden', !resumable);
     document.getElementById('btn-play').classList.toggle('primary', !resumable);
     document.getElementById('btn-resume').classList.toggle('primary', resumable);
-    const pr = progress();
-    const next = levels.find((l) => unlocked(l.id) && !pr[l.id]);
-    document.getElementById('btn-play').textContent = Object.keys(pr).length ? next ? `레벨 ${next.id} 도전하기 ↗` : '완료한 여정 다시 둘러보기 ↗' : '첫 등교 시작하기 ↗';
-    if (weekBriefing && (!S || S.status !== 'active')) document.getElementById('btn-resume').textContent = '일주일 등교 · 다음 날 준비하기 →';
-    else if (resumable) document.getElementById('btn-resume').textContent = `${S.mode === 'level' ? `레벨 ${S.levelId}` : S.mode === 'campaign' ? '캠페인' : S.mode === 'week' ? `${S.week?.name || '일주일 등교'}` : `라운드 ${S.round}`} 이어서 하기 →`;
+    document.getElementById('btn-play').textContent = '첫 등교 시작하기';
+    if (weekBriefing && (!S || S.status !== 'active')) document.getElementById('btn-resume').textContent = '일주일 등교 · 다음 날 준비하기';
+    else if (resumable) document.getElementById('btn-resume').textContent = `${S.mode === 'level' ? `레벨 ${S.levelId}` : S.mode === 'campaign' ? '캠페인' : S.mode === 'week' ? `${S.week?.name || '일주일 등교'}` : `라운드 ${S.round}`} 이어서 하기`;
     if (!S) return;
     document.getElementById('game-context').textContent = S.mode === 'level' ? `레벨 ${S.levelId} · ${S.scenario?.title || ''}` : S.mode === 'campaign' ? S.scenario?.title || '캠페인' : S.mode === 'week' ? `일주일 등교 · ${S.week?.name || ''}` : `무한 모드 · 라운드 ${S.round}`;
     if (S.subwayPreview) document.getElementById('game-context').textContent += ' · 노선 미리보기 (게임용 시간)';
     document.getElementById('current-station').textContent = S.nodes[S.cur].name;
     document.getElementById('destination-station').textContent = S.nodes[S.dest].name;
     document.getElementById('selection-route').textContent = busy ? '여정을 준비하고 있어요…' : S.status !== 'active' ? '여정을 마쳤어요' : sel == null ? '이동할 역을 선택하세요' : `${S.nodes[S.cur].name} → ${S.nodes[sel].name}`;
-    document.getElementById('selection-step').textContent = S.status !== 'active' ? 'JOURNEY COMPLETE' : sel == null ? '01 / 역 선택' : busy ? '이동 중…' : '02 / 이동 수단 선택 · 누르면 바로 이동';
+    document.getElementById('selection-step').textContent = S.status !== 'active' ? '라운드 종료' : sel == null ? '역 선택' : busy ? '이동 중…' : '수단 선택 · 누르면 바로 이동';
     document.getElementById('btn-clear-selection').classList.toggle('hidden', sel == null || busy);
     const available = availableDestinations();
     const optionsKey = `${S.sessionId}:${S.cur}:${sel}:${S.status}:${busy}:${available.join(",")}`;
@@ -105,11 +103,36 @@
     else if (selectedBlocked) message = '선택한 역으로 갈 수 없어요. ' + alternative + '으로 이동하거나 라운드를 포기할 수 있어요.';
     warning.textContent = message;
     warning.classList.toggle('hidden', !message);
+    // 포기 버튼은 메뉴에 있고, 더 갈 곳이 없을 때만 지도 위에 안내와 함께 띄운다.
+    document.getElementById('round-options').classList.toggle('show', !!message);
     giveup.classList.toggle('primary', noMoves || selectedBlocked);
     document.getElementById('hud-time').classList.toggle('low-resource', S.limit - S.used <= Math.max(10, S.limit * 0.15));
     if (!inGame) document.getElementById('tutorial').classList.add('hidden');
   }
+  // 오른쪽 영역 탭: 미션 / 정보 / 기록 / 결과(라운드가 끝난 뒤)
+  const TAB_PANELS = { mission: ['panel-mission'], info: ['panel-info'], log: ['panel-log'], result: ['panel-result', 'panel-compare'] };
+  let asideTab = 'mission', resultShown = false;
+  function setAsideTab(tab) {
+    asideTab = tab;
+    Object.entries(TAB_PANELS).forEach(([key, ids]) => {
+      const button = document.getElementById('tab-' + key);
+      button.setAttribute('aria-selected', String(key === tab));
+      button.tabIndex = key === tab ? 0 : -1;
+      ids.forEach((id) => document.getElementById(id).classList.toggle('tab-off', key !== tab));
+    });
+  }
+  document.querySelectorAll('.aside-tabs [data-tab]').forEach((button) => { button.addEventListener('click', () => setAsideTab(button.dataset.tab)); });
+  function syncAsideTabs() {
+    const hasResult = ['panel-result', 'panel-compare'].some((id) => !document.getElementById(id).classList.contains('hidden'));
+    document.getElementById('tab-result').classList.toggle('hidden', !hasResult);
+    if (hasResult && !resultShown) setAsideTab('result');          // 라운드가 끝나면 결과 탭을 연다
+    else if (!hasResult && asideTab === 'result') setAsideTab('mission');   // 새 라운드는 미션 탭부터
+    resultShown = hasResult;
+  }
+  setAsideTab('mission');
   document.addEventListener('route:ui', sync);
+  // 결과 패널은 updateFooter 이후에 열리므로 결과 창이 뜰 때·닫힐 때도 맞춘다.
+  ['route:ui', 'route:modal', 'route:modal-closed'].forEach((type) => document.addEventListener(type, syncAsideTabs));
   document.getElementById('btn-home').onclick = goHome;
   document.getElementById('btn-resume').onclick = () => {
     if (busy) return;

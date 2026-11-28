@@ -65,6 +65,13 @@ function kakaoUnavailableReason(quote) {
 function kakaoEscape(text) {
   return String(text).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 }
+// 실제 지도는 라운드가 끝난 뒤(결과가 나온 뒤) 경로 확인용으로만 연다.
+function kakaoRoundFinished() {
+  return !!S && S.status !== 'active' && typeof result !== 'undefined' && !!result;
+}
+function kakaoSwitchAllowed() {
+  return !!S?.realMapEnabled && kakaoRoundFinished();
+}
 function kakaoMapVisible() {
   return !!kakaoMapInstance && !kakaoMapEl.classList.contains('hidden') && !!S &&
     renderedSessionId === S.sessionId;
@@ -81,6 +88,7 @@ function showGameMap() {
 
 gameMapBtn.addEventListener('click', showGameMap);
 kakaoMapBtn.addEventListener('click', () => {
+  if (!kakaoSwitchAllowed()) return; // 플레이 중에는 게임 지도만 사용
   showKakaoMap().catch((error) => {
     console.error('카카오맵 오류:', error);
     notify('실제 지도를 표시하지 못했습니다. 콘솔을 확인해 주세요.');
@@ -112,6 +120,11 @@ async function showKakaoMap() {
   ensureKakaoLegend();
   kakaoMapInstance.relayout();
   await showGameNodes();
+  // 끝난 라운드에서 실제 지도를 열면 경로 비교(최적 경로·내 경로)를 바로 보여 준다.
+  if (request === mapRequest && !kakaoMapEl.classList.contains('hidden') && kakaoRoundFinished() &&
+      !kakaoOverlayState() && typeof showCompare === 'function') {
+    showCompare();
+  }
   if (request === mapRequest && !kakaoMapEl.classList.contains('hidden') && S) {
     updateFooter(); // 실제 지도를 사용할 때 이동수단을 하단 패널에 표시
   }
@@ -562,9 +575,12 @@ function kakaoMapRender() {
 
 // game.js의 updateFooter()가 호출될 때마다 상태를 다시 그린다.
 // 이동 성공, 재시도, 역 선택 후에도 원본 game.js 게임 규칙이 우선한다.
+// 전환 버튼은 실제 지도 모드에서 라운드가 끝났을 때만 보인다.
+// 재도전·다음 라운드로 새 판이 시작되면 게임 지도로 돌아간다.
 document.addEventListener('route:ui', () => {
-  mapSwitch.classList.toggle('hidden', !S?.realMapEnabled);
-  if (!S?.realMapEnabled) {
+  const allowed = kakaoSwitchAllowed();
+  mapSwitch.classList.toggle('hidden', !allowed);
+  if (!allowed) {
     if (!kakaoMapEl.classList.contains('hidden')) showGameMap();
     return;
   }
