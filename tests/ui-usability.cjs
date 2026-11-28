@@ -15,6 +15,10 @@ fs.mkdirSync(path.join(runtime, 'data'));
 fs.copyFileSync(path.join(root, 'data', 'subwayNetwork.json'), path.join(runtime, 'data', 'subwayNetwork.json'));
 for (const file of ['server.js', 'routes.json']) fs.copyFileSync(path.join(root, file), path.join(runtime, file));
 fs.cpSync(path.join(root, 'node_modules'), path.join(runtime, 'node_modules'), { recursive: true });
+// This suite exercises deterministic fallback; never inherit live provider
+// credentials when running UI automation from a configured developer shell.
+delete process.env.GEMINI_API_KEY;
+delete process.env.GEMINI_MODEL;
 const app = require(path.join(runtime, 'server.js'));
 process.on('exit', () => fs.rmSync(runtime, { recursive: true, force: true }));
 const calls=[];

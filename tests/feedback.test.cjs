@@ -6,7 +6,8 @@ const { randomUUID } = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const E = require('../lib/engine');
-const { generateFeedback } = require('../lib/llm');
+const llm = require('../lib/llm');
+const { generateFeedback } = llm;
 const { feedbackResult, basicFeedback } = require('../lib/feedbackResult');
 const { validateFeedback, parseFeedback } = require('../lib/feedbackSchema');
 const { coachFailure, logCoach } = require('../lib/coachLog');
@@ -45,6 +46,9 @@ test('completed sessions generate and cache coaching from server-owned gameplay 
     [`${node + 1}:bus`, { q: node === 0 ? first : second }],
   ]));
 
+  // Passthrough spy: run the actual SDK, count logical generation requests
+  // independently from the mocked HTTP attempts below.
+  const generations = t.mock.method(llm, 'generateFeedback');
   const app = require('../server');
   const server = app.listen(0, '127.0.0.1');
   t.after(() => server.close());
@@ -61,12 +65,16 @@ test('completed sessions generate and cache coaching from server-owned gameplay 
   const giveup = sessionId => api('simulate/giveup', { sessionId });
   const feedback = (sessionId, extra) => api('feedback', { sessionId, ...extra });
 
-  const missingKeyRound = await start({});
+  const errandLevelId = E.cfg.levels.find(level => level.errand).id;
+  const missingKeyRound = await start({ mode: 'level', levelId: errandLevelId });
   assert.equal((await feedback(missingKeyRound.sessionId)).status, 409);
   assert.equal((await feedback(randomUUID())).status, 404);
   assert.equal((await feedback(42)).status, 400);
   await giveup(missingKeyRound.sessionId);
-  assert.equal((await feedback(missingKeyRound.sessionId)).body.source, 'fallback');
+  const missingKeyFeedback = (await feedback(missingKeyRound.sessionId)).body;
+  assert.equal(missingKeyFeedback.source, 'fallback');
+  assert.match(missingKeyFeedback.feedback.evaluation, /경유역.*들르기.*완료하지 못했어요/);
+  assert.match(missingKeyFeedback.feedback.tip, /경유역.*심부름/);
   await assert.rejects(generateFeedback({}), /gemini_not_configured/);
 
   try {
@@ -88,6 +96,9 @@ test('completed sessions generate and cache coaching from server-owned gameplay 
   };
   let generatedText = JSON.stringify(generatedFeedback);
   const payloads = [];
+  const attempts = [];
+  let nextStatuses = [];
+  let holdAttempt = null;
   const upstream = t.mock.method(global, 'fetch', async (url, options) => {
     assert.match(String(url), /generativelanguage.googleapis.com\/.*fixture-model:generateContent/);
     const request = JSON.parse(options.body);
@@ -96,25 +107,42 @@ test('completed sessions generate and cache coaching from server-owned gameplay 
     assert.deepEqual(request.generationConfig.responseJsonSchema.required, ['evaluation', 'comparison', 'tip']);
     assert.equal(request.generationConfig.responseJsonSchema.additionalProperties, false);
     assert.ok(options.signal);
+    assert.equal(new Headers(options.headers).get('x-server-timeout'), '15');
     payloads.push(JSON.parse(request.contents[0].parts[0].text));
+    const status = nextStatuses.length ? nextStatuses.shift() : responseStatus;
+    attempts.push({ status, body: options.body, signal: options.signal });
     if (waitForAbort) {
       return new Promise((_, reject) => {
         options.signal.addEventListener('abort', () => reject(options.signal.reason), { once: true });
       });
     }
     if (networkError) throw new TypeError('mock connection lost');
-    if (responseStatus !== 200) return Response.json({ error: { code: responseStatus } }, { status: responseStatus });
+    if (holdAttempt) await holdAttempt(status);
+    if (status !== 200) return Response.json({ error: { code: status } }, { status });
     return Response.json({ candidates: [{ content: { parts: [{ text: generatedText }] } }] });
   });
+  const snapshot = () => ({ generations: generations.mock.callCount(), http: upstream.mock.callCount() });
+  const assertGeneration = (before, statuses) => {
+    assert.equal(generations.mock.callCount() - before.generations, 1, 'one application generation per round');
+    assert.equal(upstream.mock.callCount() - before.http, statuses.length);
+    const observed = attempts.slice(before.http);
+    assert.deepEqual(observed.map(attempt => attempt.status), statuses, 'verify initial and retry outcomes, not just a total count');
+    if (observed.length === 2) {
+      assert.equal(observed[0].body, observed[1].body, 'SDK retry sends the same result and schema');
+      assert.notEqual(observed[0].signal, observed[1].signal, 'SDK retry gets a new per-attempt timeout');
+    }
+  };
 
   const endless = await start({});
   await move(endless.sessionId, 1);
   assert.equal((await move(endless.sessionId, 2)).result.status, 'success');
   assert.equal(upstream.mock.callCount(), 0);
+  const beforeClear = snapshot();
   const requests = await Promise.all(Array.from({ length: 4 }, () => feedback(endless.sessionId, { usedTime: 999 })));
   assert.deepEqual(requests.map(r => r.body), Array(4).fill({ success: true, source: 'gemini', feedback: generatedFeedback }));
   assert.deepEqual((await feedback(endless.sessionId)).body, requests[0].body);
   assert.equal(upstream.mock.callCount(), 1);
+  assertGeneration(beforeClear, [200]);
   assert.equal(payloads[0].mode, 'endless');
   assert.deepEqual(payloads[0].playerMinusOptimal, { minutes: 0, fareWon: 0, staminaLeft: null });
   assert.deepEqual(payloads[0].player.steps.map(step => step.to), ['경유역', '도착역']);
@@ -157,20 +185,29 @@ test('completed sessions generate and cache coaching from server-owned gameplay 
   for (const status of [429, 503, 200]) {
     responseStatus = status;
     generatedText = ' ';
-    const round = await start({});
+    const round = await start(status === 503 ? { mode: 'level', levelId: errandLevelId } : {});
     await giveup(round.sessionId);
-    const before = upstream.mock.callCount();
-    const failed = await feedback(round.sessionId);
+    const before = snapshot();
+    const failures = await Promise.all(Array.from({ length: 4 }, () => feedback(round.sessionId)));
+    const failed = failures[0];
+    assert.deepEqual(failures.map(result => result.body), Array(4).fill(failed.body));
     assert.equal(failed.body.source, 'fallback');
     assert.match(failed.body.feedback.evaluation, /도전을 멈췄어요/);
+    if (status === 503) {
+      assert.match(failed.body.feedback.evaluation, /경유역.*들르기.*완료하지 못했어요/);
+      assert.match(failed.body.feedback.tip, /경유역.*심부름/);
+    }
     assert.deepEqual(validateFeedback(failed.body.feedback), failed.body.feedback);
     assert.deepEqual((await feedback(round.sessionId)).body, failed.body);
-    assert.equal(upstream.mock.callCount(), before + 1);
+    assertGeneration(before, status === 200 ? [200] : [status, status]);
   }
+  // Quota is charged for logical generations, never for SDK retry attempts.
+  assert.equal(generations.mock.callCount(), 10);
+  const beforeLimited = snapshot();
   const limited = await start({});
   await giveup(limited.sessionId);
   assert.equal((await feedback(limited.sessionId)).body.source, 'fallback');
-  assert.equal(upstream.mock.callCount(), 9);
+  assert.deepEqual(snapshot(), beforeLimited, 'local quota fallback must not invoke Gemini');
   await api('simulate/retry', { sessionId: endless.sessionId });
   assert.equal((await feedback(endless.sessionId)).status, 404);
 
@@ -179,16 +216,51 @@ test('completed sessions generate and cache coaching from server-owned gameplay 
   const now = Date.now() + 60001;
   t.mock.method(Date, 'now', () => now);
   responseStatus = 200;
+  generatedText = JSON.stringify(generatedFeedback);
+  for (const temporaryStatus of [429, 503]) {
+    nextStatuses = [temporaryStatus, 200];
+    const round = await start({ mode: 'level', levelId: errandLevelId });
+    await giveup(round.sessionId);
+    const before = snapshot();
+    const retryReached = Promise.withResolvers();
+    const retryGate = Promise.withResolvers();
+    holdAttempt = async status => {
+      if (status === 200) { retryReached.resolve(); await retryGate.promise; }
+    };
+    let settled = false;
+    const pending = Promise.all(Array.from({ length: 4 }, () => feedback(round.sessionId)))
+      .then(results => { settled = true; return results; });
+    try {
+      await Promise.race([
+        retryReached.promise,
+        pending.then(() => { throw new Error('Expected SDK retry before feedback completes'); }),
+      ]);
+      assert.equal(settled, false, 'do not return fallback before the successful retry finishes');
+      assertGeneration(before, [temporaryStatus, 200]);
+    } finally {
+      retryGate.resolve();
+    }
+    const recovered = await pending;
+    holdAttempt = null;
+    assert.equal(nextStatuses.length, 0, 'both planned attempts must run');
+    assert.deepEqual(recovered.map(result => result.body), Array(4).fill(recovered[0].body));
+    assert.equal(recovered[0].body.source, 'gemini');
+    assert.match(recovered[0].body.feedback.evaluation, /경유역.*들르기.*완료하지 못했어요/);
+    assert.match(recovered[0].body.feedback.tip, /경유역.*심부름/);
+    assert.deepEqual(validateFeedback(recovered[0].body.feedback), recovered[0].body.feedback);
+    assert.deepEqual((await feedback(round.sessionId)).body, recovered[0].body);
+    assertGeneration(before, [temporaryStatus, 200]);
+  }
   for (const invalid of ['not JSON', '{', '{"evaluation":"좋아요."}', '{"evaluation":3,"comparison":"비교예요.","tip":"조언이에요."}']) {
     generatedText = invalid;
     const round = await start({});
     await giveup(round.sessionId);
-    const before = upstream.mock.callCount();
+    const before = snapshot();
     const failed = await feedback(round.sessionId);
     assert.equal(failed.body.source, 'fallback');
     assert.deepEqual(validateFeedback(failed.body.feedback), failed.body.feedback);
     assert.deepEqual((await feedback(round.sessionId)).body, failed.body);
-    assert.equal(upstream.mock.callCount(), before + 1);
+    assertGeneration(before, [200]);
   }
 
   responseStatus = 404;
@@ -199,7 +271,7 @@ test('completed sessions generate and cache coaching from server-owned gameplay 
   waitForAbort = true;
   const timeout = AbortSignal.timeout;
   t.mock.method(AbortSignal, 'timeout', milliseconds => {
-    assert.equal(milliseconds, 20000);
+    assert.equal(milliseconds, 15000);
     return timeout(10);
   });
   await assert.rejects(generateFeedback({}), { name: 'AbortError' });
