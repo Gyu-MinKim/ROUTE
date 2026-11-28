@@ -104,6 +104,16 @@ let count=0;const ok=t=>{count++;console.log('PASS',t);};
  assert.equal(el('#btn-giveup').disabled,false);
  await click('#btn-giveup');await click(action('취소'));assert.equal(run('S.status'),'active');
  await click('#btn-giveup');await click(action('포기'));assert.equal(run('S.status'),'fail');
+ for (const scope of ['#modal-body', '#panel-result']) {
+  assert.equal(el(`${scope} [data-coach-source]`).textContent, '기본 피드백');
+  assert.deepEqual([...el(`${scope} [data-coach-sections]`).querySelectorAll('h3')].map(node => node.textContent), ['플레이 평가', '최적 경로와의 비교', '다음 플레이 TIP']);
+  for (const key of ['evaluation', 'comparison', 'tip']) {
+   const text = el(`${scope} [data-coach-field="${key}"]`).textContent;
+   assert.ok(text.trim()); assert.doesNotMatch(text, /기본 피드백|시간\/자원\/체력 부족|undefined/);
+  }
+  assert.equal(el(`${scope} [data-coach-feedback]`).getAttribute('aria-busy'), 'false');
+ }
+ ok('fallback coaching uses three readable sections and a separate source label');
  await click(action('같은 지도 재도전'));assert.equal(run('S.status'),'active');
  assert.equal(el('#btn-giveup').classList.contains('primary'),false);
  ok('blocked movement explains alternatives and offers give up with same-map retry');
@@ -118,16 +128,65 @@ let count=0;const ok=t=>{count++;console.log('PASS',t);};
  await click('#modal-close');await click('#btn-week');assert.ok(el('#modal-title').textContent.length);assert.ok(action('출발'));ok('week campaign entry and day briefing remain available');
  await click(action('출발'));if(action('새 게임 시작'))await click(action('새 게임 시작'));assert.equal(run('S.mode'),'week');assert.ok(run('S.week'));ok('week session starts with the correct API payload');
  await click('#modal-close');assert.match(el('#game-context').textContent,/일주일/);assert.match(el('#mission-sub').textContent,/./);ok('week context and mission details render');
- // Failed days must still allow progression, and closing tomorrow's briefing must be recoverable.
- await click('#btn-giveup');await click(action('포기'));assert.ok(action('다음 날'));await click(action('다음 날'));assert.match(el('#modal-title').textContent,/./);assert.equal(run('weekBriefing.day'),2);await click('#modal-close');assert.equal(el('#btn-resume').classList.contains('hidden'),false);await click('#btn-resume');assert.equal(run('weekBriefing.day'),2);ok('failed week day can advance and next-day briefing can be resumed');
+ // Keep feedback pending while the player advances to another day.
+ let releaseFeedback;
+ context.fetch = (url, options) => url === '/api/feedback'
+   ? new Promise(resolve => { releaseFeedback = resolve; })
+   : originalFetch(url, options);
+ await click('#btn-giveup');await click(action('포기'));assert.ok(action('다음 날'));
+ assert.match(el('#modal-body [data-coach-feedback]').textContent, /분석하고 있어요/);
+ await click(action('다음 날'));assert.equal(run('weekBriefing.day'),2);
+ await click('#modal-close');assert.equal(el('#btn-resume').classList.contains('hidden'),false);
+ await click('#btn-resume');assert.equal(run('weekBriefing.day'),2);
+ const oldFeedback = releaseFeedback;
+ context.fetch = originalFetch;
+ ok('failed week day can advance while feedback is pending and its briefing can be resumed');
  await click(action('출발'));await click('#modal-close');assert.ok(run('S.errand'));assert.match(el('#mission-sub').textContent,/민수/);assert.match(el('#map').textContent,/📚|📖|📒|📕|✔/);ok('errand marker and instructions survive UI integration');
+ const oldCoachText = el('#panel-result [data-coach-feedback]').textContent;
+ oldFeedback({ ok: true, json: async () => ({ source: 'gemini', feedback: { evaluation: '이전 평가예요.', comparison: '이전 비교예요.', tip: '이전 조언이에요.' } }) });
+ await settle();
+ assert.equal(el('#panel-result [data-coach-feedback]').textContent, oldCoachText);
+ ok('a previous day cannot overwrite feedback after the next round starts');
  await click('#btn-giveup');await click(action('포기'));const plan=JSON.parse(run('JSON.stringify(result.optimal.steps)'));await click(action('같은 지도 재도전'));
+ const coachText = '<img src=x onerror=alert(1)> 기준 경로를 잘 따라갔어요.';
+ const coachFeedback = { evaluation: coachText, comparison: '기준 경로와 같은 수단을 이용했어요.', tip: '다음에도 갈림길의 이동 시간을 먼저 확인해 보세요.' };
+ context.fetch = (url, options) => url === '/api/feedback'
+   ? Promise.resolve({ ok: true, json: async () => ({ source: 'gemini', feedback: coachFeedback }) })
+   : originalFetch(url, options);
  for(const step of plan){await click(el(`#map [data-id="${step.to}"] .label`));const n=run('S.status==="active"?S.path.length:-1');await click(`[data-mode="${step.mode}"]`);assert.equal(run('S.path.length'),n+1);}
  assert.equal(run('S.status'),'success');assert.ok(run('result.story'));assert.match(el('#modal-body').textContent,/民|민수|교재|친구/);ok('real movement completes an errand and preserves story result');
+ for (const scope of ['#modal-body', '#panel-result']) {
+  for (const key of ['evaluation', 'comparison', 'tip']) assert.equal(el(`${scope} [data-coach-field="${key}"]`).textContent, coachFeedback[key]);
+  assert.equal(el(`${scope} [data-coach-source]`).textContent, 'Gemini 생성');
+ }
+ assert.equal(el('#modal-body [data-coach-feedback] img'), null);
+ context.fetch = originalFetch;
+ ok('AI coaching is displayed as plain text in the result and comparison panels');
+ context.fetch = async () => ({ ok: true, json: async () => ({ source: 'gemini', feedback: { evaluation: '빠진 항목이 있어요.' } }) });
+ await run('loadRoundFeedback(S.sessionId)');
+ assert.match(el('#panel-result [data-coach-state]').textContent, /불러오지 못했어요/);
+ assert.equal(el('#panel-result [data-coach-sections]').hidden, true);
+ context.fetch = async () => { throw new Error('PRIVATE_PROVIDER_ERROR'); };
+ await run('loadRoundFeedback(S.sessionId)');
+ assert.doesNotMatch(el('#panel-result [data-coach-feedback]').textContent, /PRIVATE_PROVIDER_ERROR/);
+ context.fetch = originalFetch;
+ await run('loadRoundFeedback(S.sessionId)');
+ ok('malformed responses and transport failures never render partial data or provider errors');
  await click('#modal-close');assert.equal(el('#panel-compare').classList.contains('hidden'),false);assert.ok(el('#btn-retry'));ok('dismissing results leaves comparison and retry controls accessible');
  // Start an event level directly for integration coverage independent of saved unlocks.
  await run("ctx={kind:'level',levelId:5,round:1}; startRound()");await settle();assert.ok(run('S.event'));assert.equal(el('#event-banner').classList.contains('hidden'),false);assert.ok(el('#modal-body').textContent.includes(run('S.event.text')));await click('#modal-close');ok('traffic event forecast is visible in briefing and map banner');
- await click('#btn-giveup');await click(action('포기'));await click('#modal-close');await click('#btn-retry');assert.equal(run('S.status'),'active');assert.equal(el('#modal').classList.contains('hidden'),true);ok('comparison retry skips repeated intro');
+ context.fetch = (url, options) => url === '/api/feedback'
+   ? new Promise(resolve => { releaseFeedback = resolve; })
+   : originalFetch(url, options);
+ await click('#btn-giveup');await click(action('포기'));await click('#modal-close');
+ const pendingText = el('#panel-result [data-coach-feedback]').textContent;
+ await click('#btn-retry');
+ releaseFeedback({ ok: true, json: async () => ({ source: 'gemini', feedback: coachFeedback }) });
+ await settle();
+ assert.equal(run('S.status'),'active');assert.equal(el('#modal').classList.contains('hidden'),true);
+ assert.equal(el('#panel-result [data-coach-feedback]').textContent, pendingText);
+ context.fetch = originalFetch;
+ ok('comparison retry skips repeated intro and ignores late feedback');
  // Resource failures explain their cause and survive keyboard selection.
  const target=run('availableDestinations()[0]');const station=el(`#map [data-id="${target}"]`);station.dispatchEvent(Object.assign(new window.Event('keydown',{bubbles:true}),{key:'Enter'}));await settle();assert.equal(run('sel'),target);ok('keyboard can select a reachable station');
  run("S.quotes[`${sel}:subway`]={time:1,cost:S.resLeft+300,stam:0};S.quotes[`${sel}:bus`]={time:1,cost:0,stam:S.stamina.left+4};updateFooter()");assert.match(el('[data-mode="subway"]').textContent,/300.*부족/);assert.match(el('[data-mode="bus"]').textContent,/체력 4 부족/);ok('unavailable transport explains money and stamina shortages');

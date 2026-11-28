@@ -4,6 +4,9 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const E = require('./lib/engine');
+const { generateFeedback } = require('./lib/llm');
+const { feedbackResult, basicFeedback } = require('./lib/feedbackResult');
+const { logCoach } = require('./lib/coachLog');
 const { network: subwayNetwork } = require('./lib/subwayNetwork');
 const F = require('./lib/farePolicy');
 const { newSegmentRound } = require('./lib/segmentRounds');
@@ -11,10 +14,12 @@ const { newStoredRound, VerifiedRoundError } = require('./lib/verifiedRounds');
 
 // Node.js 20.12+ 환경에서는 프로젝트 루트의 .env를 자동으로 읽는다.
 // 구버전 Node.js/배포 환경에서는 KAKAO_REST_API_KEY 환경변수를 직접 설정하면 된다.
+let coachEnvFile = 'loader_unavailable';
 if (typeof process.loadEnvFile === 'function') {
-  try { process.loadEnvFile(path.join(__dirname, '.env')); }
-  catch (e) { if (e.code !== 'ENOENT') throw e; }
+  try { process.loadEnvFile(path.join(__dirname, '.env')); coachEnvFile = 'loaded'; }
+  catch (e) { if (e.code !== 'ENOENT') throw e; coachEnvFile = 'absent'; }
 }
+logCoach('configuration', { envFile: coachEnvFile });
 
 const stationCoordinates = new Map();
 for (const { stationName, lat, lng } of Object.values(subwayNetwork.stations)) {
@@ -115,7 +120,7 @@ function publicState(s) {
   };
 }
 
-function finish(s, status, reason) {
+function finish(s, status, reason, blockedBy) {
   s.status = status;
   const opt = s.opt;
   const eff = status === 'success' ? Math.min(1, opt.time / s.used) : 0;
@@ -136,6 +141,7 @@ function finish(s, status, reason) {
     hint: E.divergenceHint(s.graph, s.path, opt),
   };
   s.result = result;
+  s.blockedBy = blockedBy;
   const w = s.weekId && weeks.get(s.weekId);
   if (w && w.day === s.scenario.day) w.pending = { status, left: s.resources - s.spent, errandDone: !!s.errandDone };
   appendHistory({
@@ -147,9 +153,18 @@ function finish(s, status, reason) {
 }
 
 // 남은 시간·자금 안에 더 이동할 수 있는 간선이 있는지
-function canMove(s) {
+function blockedMoves(s) {
   const left = s.limit - s.used, money = s.resources - s.spent, stam = s.maxStamina - s.stamSpent;
-  return Object.values(quotesFor(s)).some((q) => q.time <= left && q.cost <= money && (!s.persona || q.stam <= stam));
+  const reasons = [];
+  for (const q of Object.values(quotesFor(s))) {
+    const constraints = [];
+    if (q.time > left) constraints.push('time');
+    if (q.cost > money) constraints.push('fare');
+    if (s.persona && q.stam > stam) constraints.push('stamina');
+    if (!constraints.length) return null;
+    reasons.push(constraints);
+  }
+  return reasons;
 }
 
 setInterval(() => {
@@ -329,6 +344,48 @@ app.post('/api/simulate/retry', (req, res) => {
   res.json(publicState(openSession(s.init)));
 });
 
+// Limit new generations across sessions. Cached and concurrent reads use no quota.
+const FEEDBACK_PER_MINUTE = 10;
+let feedbackWindowEnd = 0;
+let feedbackStarts = 0;
+
+app.post('/api/feedback', async (req, res) => {
+  const { sessionId } = req.body || {};
+  if (typeof sessionId !== 'string' || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(sessionId))
+    return res.status(400).json({ error: 'invalid_session_id' });
+
+  const now = Date.now();
+  const s = sessions.get(sessionId);
+  if (!s || now - s.touched > TTL) return res.status(404).json({ error: 'session_not_found' });
+  if (!s.result) return res.status(409).json({ error: 'round_active' });
+  if (!s.feedback) {
+    if (now >= feedbackWindowEnd) {
+      feedbackWindowEnd = now + 60_000;
+      feedbackStarts = 0;
+    }
+    const gameResult = feedbackResult(s);
+    const requestId = crypto.randomUUID();
+    const started = Date.now();
+    const fallback = error => {
+      logCoach('fallback', { requestId, elapsedMs: Date.now() - started, source: 'fallback', error });
+      return { success: true, source: 'fallback', feedback: basicFeedback(gameResult) };
+    };
+    if (feedbackStarts >= FEEDBACK_PER_MINUTE) {
+      s.feedback = Promise.resolve(fallback({ code: 'local_rate_limit' }));
+    } else {
+      feedbackStarts++;
+      logCoach('request_started', { requestId });
+      s.feedback = generateFeedback(gameResult, { requestId })
+        .then(feedback => {
+          logCoach('generated', { requestId, elapsedMs: Date.now() - started, source: 'gemini' });
+          return { success: true, source: 'gemini', feedback };
+        })
+        .catch(fallback);
+    }
+  }
+  res.json(await s.feedback);
+});
+
 app.post('/api/simulate/step', (req, res) => {
   const { sessionId, to, mode } = req.body || {};
   const s = sessions.get(sessionId);
@@ -357,7 +414,10 @@ app.post('/api/simulate/step', (req, res) => {
   let result = null;
   if (s.used > s.limit) result = finish(s, 'fail', '제한 시간을 초과했어요.');
   else if (s.cur === s.dest) result = finish(s, 'success', '목적지에 도착!');
-  else if (!canMove(s)) result = finish(s, 'fail', '더 이상 이동할 수 없어요. (시간/자원/체력 부족)');
+  else {
+    const blockedBy = blockedMoves(s);
+    if (blockedBy) result = finish(s, 'fail', '더 이상 이동할 수 없어요. (시간/자원/체력 부족)', blockedBy);
+  }
   res.json({ state: publicState(s), result });
 });
 

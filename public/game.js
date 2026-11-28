@@ -27,7 +27,7 @@ function applySettings() {
 }
 
 async function api(path, body, controller = new AbortController()) {
-  const timeout = setTimeout(() => controller.abort(), path === '/api/simulate/start' ? 35000 : 15000);
+  const timeout = setTimeout(() => controller.abort(), path === '/api/simulate/start' ? 35000 : path === '/api/feedback' ? 25000 : 15000);
   try {
     const res = await fetch(path, { ...(body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}), signal: controller.signal });
     const data = await res.json().catch(() => ({}));
@@ -524,6 +524,47 @@ $('#btn-giveup').onclick = () => {
 };
 
 /* ── 결과 / 비교 / 재생 ── */
+const coachLoading = 'AI가 플레이 결과를 분석하고 있어요...';
+const coachContentMarkup = `<div class="coach-heading"><strong>AI ROUTE COACH</strong><small data-coach-source></small></div>
+  <p data-coach-state role="status"></p>
+  <div data-coach-sections hidden>
+    <section class="coach-section"><h3>플레이 평가</h3><p data-coach-field="evaluation"></p></section>
+    <section class="coach-section"><h3>최적 경로와의 비교</h3><p data-coach-field="comparison"></p></section>
+    <section class="coach-section"><h3>다음 플레이 TIP</h3><p data-coach-field="tip"></p></section>
+  </div>`;
+const coachMarkup = `<div class="route-coach" data-coach-feedback aria-live="polite">${coachContentMarkup}</div>`;
+let coachRequestToken = 0;
+
+async function loadRoundFeedback(sessionId) {
+  const token = ++coachRequestToken;
+  const areas = [$('#panel-result [data-coach-feedback]'), $('#modal-body [data-coach-feedback]')];
+  areas.forEach(area => {
+    area.innerHTML = coachContentMarkup;
+    area.setAttribute('aria-busy', 'true');
+    area.querySelector('[data-coach-state]').textContent = coachLoading;
+  });
+  let data;
+  try {
+    data = await api('/api/feedback', { sessionId });
+    if (!['gemini', 'fallback'].includes(data.source)
+        || !['evaluation', 'comparison', 'tip'].every(key => typeof data.feedback?.[key] === 'string'
+          && data.feedback[key].trim() && data.feedback[key].length <= 300)) data = null;
+  } catch { /* Keep transport errors out of the coaching content. */ }
+  if (token !== coachRequestToken || S?.sessionId !== sessionId || S.status === 'active') return;
+  areas.forEach(area => {
+    if (!area.isConnected) return;
+    area.setAttribute('aria-busy', 'false');
+    const state = area.querySelector('[data-coach-state]');
+    if (!data) { state.textContent = '피드백을 불러오지 못했어요. 경로 비교에서 이번 이동을 돌아볼 수 있어요.'; return; }
+    state.hidden = true;
+    area.querySelector('[data-coach-source]').textContent = data.source === 'gemini' ? 'Gemini 생성' : '기본 피드백';
+    for (const key of ['evaluation', 'comparison', 'tip']) {
+      area.querySelector(`[data-coach-field="${key}"]`).textContent = data.feedback[key];
+    }
+    area.querySelector('[data-coach-sections]').hidden = false;
+  });
+}
+
 function onRoundEnd(r) {
   result = r; sel = null; selMode = null; updateFooter();
   $('#panel-result').classList.remove('hidden'); setCollapsed('panel-result', false);
@@ -545,12 +586,13 @@ function onRoundEnd(r) {
   const retryBtn = { label: '같은 지도 재도전', fn: () => startRound(true) };
   const exitBtn = ctx.kind === 'level' ? { label: '레벨 선택', fn: openLevels } : { label: '홈으로', fn: goHome };
   if (ok) {
-    modal('라운드 결과', `${starsHtml}<div class="big-grade">${r.grade}</div>${story}${isLv ? '' : checks}<p>최적 대비 효율 ${r.efficiency}% (최적 ${r.optimal.time}분 / 내 경로 ${r.usedTime}분)</p>`,
+    modal('라운드 결과', `${starsHtml}<div class="big-grade">${r.grade}</div>${story}${isLv ? '' : checks}<p>최적 대비 효율 ${r.efficiency}% (최적 ${r.optimal.time}분 / 내 경로 ${r.usedTime}분)</p>${coachMarkup}`,
       [{ label: nextLabel(), primary: true, fn: nextRound }, retryBtn, { label: '경로 비교', fn: showCompare }, exitBtn], { onDismiss: showCompare });
   } else {
-    modal('실패…! 최적 경로를 확인해보세요.', `<p>${escapeHtml(r.reason)}</p>${story}${checks}<p><b>💡 ${r.hint}</b></p>`,
+    modal('실패…! 최적 경로를 확인해보세요.', `<p>${escapeHtml(r.reason)}</p>${story}${checks}<p><b>💡 ${r.hint}</b></p>${coachMarkup}`,
       [{ ...retryBtn, primary: true }, { label: '경로 비교', fn: showCompare }, { label: '최적 경로 재생', fn: () => { showCompare(); replay(); } }, ...(ctx.kind === 'week' ? [{ label: nextLabel(), fn: nextRound }] : []), exitBtn], { onDismiss: showCompare });
   }
+  void loadRoundFeedback(S.sessionId);
 }
 
 const nextLabel = () => (ctx.kind === 'week' ? (S && S.week && S.week.day >= 5 ? '일주일 결과 ›' : '다음 날 ›') : ctx.kind === 'campaign' ? '메인으로' : ctx.kind === 'level' ? (ctx.levelId < 15 ? '다음 레벨 ›' : '레벨 선택') : '다음 라운드 ›');
