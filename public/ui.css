@@ -591,3 +591,12 @@ body.dark .geo-label.water { fill:#8fb7c9; }
 .lg-line.subway { border-top-color:#747F00; }
 .lg-line.bus { border-top:4px dashed #E8590C; }
 .lg-line.walk { border-top:4px dotted #6b7280; }
+
+/* 역 옆 수단 카드 (한 줄) */
+.modes.pop { width:auto; gap:4px; padding:5px; border-radius:12px; }
+.modes.pop .mode { min-height:36px; padding:5px 10px; grid-template-columns:22px auto; column-gap:6px; align-items:center; white-space:nowrap; }
+.modes.pop .mode.sel { padding:4px 9px; }
+.modes.pop .mode .mode-symbol { grid-row:auto; font-size:16px; }
+.modes.pop .mode span:not(.mode-symbol) { /* 스크린리더용 */ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+.modes.pop .mode small { font-size:12px; font-weight:650; color:var(--ink); white-space:nowrap; }
+.modes.pop .mode:disabled small { color:var(--muted); }
