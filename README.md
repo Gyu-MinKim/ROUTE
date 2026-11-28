@@ -19,6 +19,14 @@ npm test
 
 테스트는 DOM·Express 연동 검사와 Node 테스트를 실행합니다. 화면 흐름, 라운드 생성, 이동 규칙, 재도전과 캠페인 연동을 확인합니다. 실제 브라우저의 화면 배치와 터치 조작은 별도로 확인해야 합니다.
 
+## AI ROUTE COACH
+
+Gemini 피드백에는 Node.js 22 이상이 필요합니다. 프로젝트 루트에서 `GEMINI_API_KEY`와 `GEMINI_MODEL`을 서버 환경 변수로 설정하거나 루트의 `.env`에 두 값을 설정합니다. 설정이 없거나 모델 응답을 받지 못하면 결과 화면에 기본 피드백이 표시됩니다.
+
+라운드 종료 후 서버 세션의 실제 이동 기록으로 코칭을 생성합니다. Gemini Structured Output의 JSON Schema와 서버 검증을 통해 `feedback`에 `{ evaluation, comparison, tip }` 문자열 세 항목을 반환하며, 기본 피드백도 같은 형식입니다. 결과 패널과 모달에서 플레이 평가, 최적 경로와의 비교, 다음 플레이 TIP을 나누어 표시합니다. `source`는 `gemini` 또는 `fallback`이며 작은 보조 문구로 구분합니다.
+
+Gemini 요청의 제한 시간은 20초(브라우저는 25초)입니다. 기존 8초 설정은 Gemini의 최소 10초 deadline보다 짧아 400 오류가 발생했습니다. `[ROUTE COACH]` 서버 로그에서 환경변수 설정 여부, 모델, 요청 식별자, 소요 시간과 성공 또는 fallback 사유를 확인할 수 있습니다. `gemini_not_configured`, `timeout`, `upstream_rate_limit`, `model_or_endpoint_not_found`, `gemini_invalid_json`, `gemini_invalid_schema`, `local_rate_limit` 등으로 원인을 구분하며 키, 원문 오류, 요청/응답 본문은 기록하지 않습니다. 완료된 세션은 동시·반복 요청을 한 번의 생성으로 공유하고, 기본 피드백도 캐시하므로 설정을 고친 뒤에는 새 라운드에서 확인합니다.
+
 ## 실제 지도 모드
 
 저장소에 포함된 지하철·버스·도보 공개 자료로 실제 지도 모드를 준비할 수 있습니다. 프로젝트 루트의 Git Bash에서 실행합니다.

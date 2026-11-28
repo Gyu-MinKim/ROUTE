@@ -462,3 +462,15 @@ body.reduce .kakao-current { animation:none; }
   .kakao-current { animation:none; }
   .kakao-node-label { transition:none; }
 }
+
+.route-coach { margin:0 16px 16px; padding-top:10px; border-top:1px solid currentColor; }
+#modal-body .route-coach { margin:14px 0 0; }
+.route-coach strong { font-size:11px; }
+.route-coach p { margin:4px 0 0; font-size:13px; line-height:1.55; overflow-wrap:anywhere; }
+.coach-heading { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:4px 10px; }
+.coach-heading small { font-size:11px; opacity:.7; }
+.coach-section { padding:10px 0; }
+.coach-section + .coach-section { border-top:1px solid var(--line); }
+.coach-section:last-child { padding-bottom:0; }
+.coach-section h3 { margin:0; font-size:12px; font-weight:700; }
+.route-coach [hidden] { display:none; }
