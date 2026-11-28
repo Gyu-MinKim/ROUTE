@@ -78,7 +78,7 @@ function setup() {
     URLSearchParams,
   });
   vm.runInContext(source, context);
-  return { context, clicks, status, listeners, fakeKakaoEl, state, mapSwitch };
+  return { context, clicks, status, listeners, fakeKakaoEl, state, mapSwitch, kakaoButton };
 }
 
 test('인접 노드 선택은 기존 게임 SVG 클릭으로 전달된다', () => {
@@ -109,9 +109,15 @@ test('실제 지도에서 게임 노드와 간선을 시각화하고 다시 SVG�
   assert.equal(x.status.updateCount, 2);
 });
 
+function finishRound(x) {
+  x.state.status = 'success';
+  x.context.result = { status: 'success', optimal: { steps: [] } };
+}
+
 test('기본 모드는 지도 전환을 숨기고 실제 지도 요청을 무시한다', async () => {
   const x = setup();
   x.state.realMapEnabled = false;
+  finishRound(x);
   x.listeners['route:ui']();
   assert.ok(x.mapSwitch.classList.contains('hidden'));
   await vm.runInContext('showKakaoMap()', x.context);
@@ -121,9 +127,50 @@ test('기본 모드는 지도 전환을 숨기고 실제 지도 요청을 무시
   assert.equal(x.mapSwitch.classList.contains('hidden'), false);
 });
 
+test('플레이 중에는 지도 전환 버튼을 숨기고 눌러도 실제 지도를 열지 않는다', async () => {
+  const x = setup();
+  x.listeners['route:ui']();
+  assert.ok(x.mapSwitch.classList.contains('hidden'));
+  x.kakaoButton._listeners.click();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.ok(x.fakeKakaoEl.classList.contains('hidden'));
+  assert.equal(x.status.markers.length, 0);
+});
+
+test('라운드가 끝나면 전환 버튼이 보이고 실제 지도를 열면 경로 비교를 바로 보여 준다', async () => {
+  const x = setup();
+  let compared = 0;
+  x.context.showCompare = () => {
+    compared++;
+    x.context.overlay = { my: x.state.path, opt: [{ from: 0, to: 1, mode: 'walk' }] };
+  };
+  finishRound(x);
+  x.listeners['route:ui']();
+  assert.equal(x.mapSwitch.classList.contains('hidden'), false);
+  x.kakaoButton._listeners.click();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(x.fakeKakaoEl.classList.contains('hidden'), false);
+  assert.equal(compared, 1);
+  x.listeners['route:ui']();
+  assert.equal(compared, 1); // 이미 비교 중이면 다시 부르지 않음
+});
+
+test('새 판이 시작되면 실제 지도를 닫고 게임 지도로 돌아간다', async () => {
+  const x = setup();
+  finishRound(x);
+  await vm.runInContext('showKakaoMap()', x.context);
+  assert.equal(x.fakeKakaoEl.classList.contains('hidden'), false);
+  x.state.status = 'active';
+  x.context.result = null;
+  x.listeners['route:ui']();
+  assert.ok(x.fakeKakaoEl.classList.contains('hidden'));
+  assert.ok(x.mapSwitch.classList.contains('hidden'));
+});
+
 test('실제 지도에서 심부름 역과 완료 상태를 갱신한다', async () => {
   const x = setup();
   x.state.errand = { node: 1, icon: '💊', goal: '약국 들르기', done: false };
+  finishRound(x);
   await vm.runInContext('showKakaoMap()', x.context);
   const label = vm.runInContext('nodeLabels[1].getContent()', x.context);
   assert.equal(label.textContent, '💊 미아역');
@@ -191,7 +238,7 @@ test('결과 화면에서 내 경로와 최적 경로를 실제 지도에 겹쳐
   const x = setup();
   await vm.runInContext('showKakaoMap()', x.context);
   const before = x.status.lines.length;
-  x.state.status = 'success';
+  finishRound(x);
   x.state.path = [{ from: 0, to: 1, mode: 'walk' }];
   x.context.overlay = { my: x.state.path, opt: [{ from: 0, to: 1, mode: 'subway' }, { from: 1, to: 2, mode: 'bus' }] };
   x.listeners['route:ui']();

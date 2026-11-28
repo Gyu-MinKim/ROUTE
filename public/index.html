@@ -12,22 +12,19 @@
 <!-- 1. 시작 / 설정 -->
 <section id="start" class="screen active" aria-label="홈">
   <div class="home-shell">
-    <nav class="home-nav"><a class="wordmark" href="#start" aria-label="ROUTE 홈">ROUTE<span>도시 경로 퍼즐</span></a><button class="btn quiet" id="btn-settings">설정</button></nav>
+    <nav class="home-nav"><button class="btn quiet" id="btn-settings">설정</button></nav>
     <div class="home-layout">
       <div class="home-copy">
-        <span class="eyebrow">YOUR CITY. YOUR WAY.</span>
-        <h1>같은 목적지,<br>나만의 <em>경로.</em></h1>
-        <p class="home-description">걷고, 갈아타고, 조금 돌아가도 좋아요.<br>시간과 교통비 안에서 나만의 길을 찾아보세요.</p>
+        <h1 class="home-title">ROUTE<em>.</em></h1>
         <div class="home-actions">
-          <button class="btn primary big" id="btn-play">첫 등교 시작하기 <span aria-hidden="true">↗</span></button>
+          <button class="btn primary big" id="btn-play">첫 등교 시작하기</button>
           <button class="btn big hidden" id="btn-resume">진행 중인 게임 이어서 하기</button>
           <p class="resume-note hidden" id="resume-note">이 탭을 열어둔 동안 이어갈 수 있어요. 새로고침하면 진행 중인 판은 사라져요.</p>
-          <button class="btn quiet" id="btn-levels">전체 레벨 둘러보기 →</button>
+          <button class="btn quiet" id="btn-levels">전체 레벨 둘러보기</button>
         </div>
-        <div class="home-facts"><span><b>15</b>개의 등굣길</span><span><b>3</b>가지 이동 수단</span><span>생각할 시간은 <b>충분히</b></span></div>
       </div>
       <div class="home-map" aria-hidden="true">
-        <div class="map-ticket"><span>오늘의 여정</span><b>집 <i>→</i> 광운대역</b><small>어떤 길로 가볼까요?</small></div>
+        <div class="map-ticket"><span>오늘의 여정</span><b>집 <i>→</i> 광운대역</b></div>
         <svg viewBox="0 0 520 460" fill="none">
           <path class="city-grid" d="M0 80H520M0 160H520M0 240H520M0 320H520M0 400H520M80 0V460M160 0V460M240 0V460M320 0V460M400 0V460M480 0V460"/>
           <path class="city-river" d="M-30 380C90 310 100 460 250 365S410 280 550 355"/>
@@ -36,25 +33,24 @@
           <g class="route-stops"><circle cx="65" cy="245" r="12"/><circle cx="170" cy="245" r="9"/><circle cx="170" cy="160" r="9"/><circle cx="300" cy="160" r="9"/><circle cx="300" cy="75" r="9"/><circle cx="445" cy="75" r="12"/><circle cx="170" cy="330" r="7"/><circle cx="345" cy="330" r="7"/><circle cx="345" cy="190" r="7"/><circle cx="445" cy="190" r="7"/></g>
           <g class="hero-label"><text x="65" y="280">집</text><text x="170" y="135">환승</text><text x="445" y="45">광운대역</text></g>
         </svg>
-        <div class="map-stamp"><span class="status-dot"></span> 서두르지 않아도 괜찮아요. 이동할 때만 시간이 흘러요.</div>
       </div>
     </div>
     <div class="mode-collection">
-      <button class="mode-entry" id="btn-week"><span class="mode-number">01 / YOUR WEEK</span><strong>일주일 등교 <span>↗</span></strong><small>월요일부터 금요일까지, 선택이 쌓이는 등굣길.</small></button>
-      <button class="mode-entry" id="btn-endless"><span class="mode-number">02 / CHALLENGE</span><strong>무한 모드 <span>↗</span></strong><small>매번 새로운 지도에서, 어디까지 갈 수 있을까요?</small></button>
-      <button class="mode-entry" id="btn-campaign"><span class="mode-number">03 / STORIES</span><strong>상황별 캠페인 <span>↗</span></strong><small>비 오는 날부터 파업까지, 다른 조건에 도전해요.</small></button>
+      <button class="mode-entry" id="btn-week"><strong>일주일 등교</strong><small>월요일부터 금요일까지 5일 연속</small></button>
+      <button class="mode-entry" id="btn-endless"><strong>무한 모드</strong><small>라운드마다 새 지도</small></button>
+      <button class="mode-entry" id="btn-campaign"><strong>상황별 캠페인</strong><small>비 오는 날 · 촉박한 팀플 · 지하철 파업</small></button>
     </div>
-    <div class="home-bottom"><span>작은 선택으로 만드는 도시의 여정</span><span id="stats"></span></div>
+    <div class="home-bottom hidden"><span id="stats"></span></div>
   </div>
 </section>
 
 <!-- 레벨 선택 -->
 <section id="levels" class="screen">
   <div class="levels-card">
-    <div class="levels-head">
-      <button class="btn small" id="levels-back">‹ 메인</button>
-      <div class="levels-heading"><span class="eyebrow">CHOOSE YOUR ROUTE</span><h2>오늘은 어디로 갈까요?</h2><p>레벨을 완료하면 다음 여정이 열려요.</p></div>
-      <span class="levels-total" id="levels-total"></span>
+    <div class="levels-head app-bar">
+      <div class="brand"><button class="brand-word" id="levels-back" aria-label="홈으로 이동">ROUTE</button></div>
+      <h2 class="app-title">레벨 선택</h2>
+      <div class="app-actions"><span class="levels-total" id="levels-total"></span></div>
     </div>
     <div class="level-grid" id="level-grid"></div>
   </div>
@@ -62,26 +58,23 @@
 
 <!-- 게임 화면 -->
 <section id="game" class="screen">
-  <header>
-    <div class="brand"><button class="btn quiet" id="btn-home" aria-label="홈으로 이동">← 홈</button><div><b>ROUTE</b><small id="game-context">도시 경로 퍼즐</small></div></div>
-    <div class="hud">
-      <span>⏱ 남은 시간 <b id="hud-time">--</b></span>
-      <span class="sep"></span>
-      <span>💰 자금 <b id="hud-res">-</b></span>
-      <span class="sep stam-only"></span>
-      <span class="stam-only">❤️ 체력 <b id="hud-stam">-</b><i class="stam-bar"><i id="stam-fill"></i></i></span>
-      <span class="sep"></span>
-      <span id="hud-round-label">라운드 <b id="hud-round">1</b></span>
-    </div>
-    <div class="hud-btns">
-      <button class="icon wide" id="btn-subway" title="지하철 노선도">🗺 노선도</button>
-      <button class="icon wide" id="btn-help" title="도움말">도움말</button>
-      <button class="icon" id="btn-gear" title="설정">⚙</button>
-      <button class="icon wide" id="btn-pause" title="게임 메뉴">메뉴</button>
+  <header class="app-bar">
+    <div class="brand"><button class="brand-word" id="btn-home" aria-label="홈으로 이동">ROUTE</button></div>
+    <h1 class="app-title" id="game-context">ROUTE</h1>
+    <div class="app-actions">
+      <div class="hud" aria-label="남은 시간과 자금">
+        <span title="남은 시간">⏱ <b id="hud-time">--</b></span>
+        <span class="sep" aria-hidden="true"></span>
+        <span title="남은 자금">💰 <b id="hud-res">-</b></span>
+      </div>
+      <div class="hud-btns">
+        <button class="icon" id="btn-subway" title="지하철 노선도" aria-label="지하철 노선도"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg></button>
+        <button class="icon" id="btn-help" title="도움말" aria-label="도움말">?</button>
+        <button class="icon" id="btn-pause" title="게임 메뉴" aria-label="게임 메뉴"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      </div>
     </div>
   </header>
 
-  <div class="journey-strip"><span><span class="status-dot"></span> 현재 <b id="current-station">-</b></span><span class="journey-dest">목적지 <b id="destination-station">-</b></span><span class="turn-note">이동할 때만 시간이 흘러요</span></div>
   <main>
     <div class="map-wrap">
       <!-- 기존 게임 지도 -->
@@ -94,17 +87,26 @@
       <button id="btn-kakao-map" type="button">실제 지도</button>
       </div>
       <div id="event-banner" class="event-banner hidden" role="status"></div>
-      <div class="map-key"><span class="key-current">● 현재 위치</span><span class="key-reachable">○ 이동 가능</span><span>⚑ 목적지</span></div>
+      <div class="round-options" id="round-options">
+        <p id="move-warning" class="move-warning hidden" role="status"></p>
+        <button class="btn giveup" id="btn-giveup">라운드 포기</button>
+      </div>
       <div class="zoom-btns">
         <button class="icon" id="z-in" title="확대">+</button>
         <button class="icon" id="z-out" title="축소">−</button>
         <button class="icon" id="z-reset" title="전체 보기">⤢</button>
       </div>
       <div class="location-btns"><button class="btn small" id="btn-locate">내 위치</button><button class="btn small" id="btn-destination">목적지</button></div>
-      <div class="map-hint">휠: 확대/축소 · 드래그: 이동 · 더블클릭: 전체 보기</div>
+      <div class="map-attrib hidden" id="map-attrib"><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a></div>
     </div>
 
     <aside>
+      <div class="aside-tabs" role="tablist" aria-label="게임 정보">
+        <button type="button" role="tab" id="tab-mission" data-tab="mission" aria-controls="panel-mission">미션</button>
+        <button type="button" role="tab" id="tab-info" data-tab="info" aria-controls="panel-info">정보</button>
+        <button type="button" role="tab" id="tab-log" data-tab="log" aria-controls="panel-log">기록</button>
+        <button type="button" role="tab" id="tab-result" data-tab="result" aria-controls="panel-result" class="hidden">결과</button>
+      </div>
       <div class="panel" id="panel-mission">
         <button type="button" class="panel-title" aria-expanded="true">◎ 미션</button>
         <div class="mission" id="mission">-</div>
@@ -119,6 +121,24 @@
           <rect x="0" y="82" width="300" height="8" fill="#344349"/>
         </svg>
         <div class="mission-sub" id="mission-sub"></div>
+      </div>
+      <div class="panel" id="panel-info">
+        <button type="button" class="panel-title" aria-expanded="true">정보</button>
+        <div class="info-body">
+          <div class="info-stam"><div class="info-row"><span>체력</span><b id="hud-stam">-</b></div><i class="stam-bar"><i id="stam-fill"></i></i></div>
+          <dl class="info-grid">
+            <div><dt>현재 위치</dt><dd id="current-station">-</dd></div>
+            <div><dt>목적지</dt><dd id="destination-station">-</dd></div>
+            <div><dt id="hud-round-label">라운드</dt><dd id="hud-round">1</dd></div>
+            <div><dt>환승</dt><dd id="info-xfer" class="xfer">-</dd></div>
+          </dl>
+          <div class="info-legend" aria-label="지도 범례">
+            <span class="eyebrow">범례</span>
+            <span><i class="lg-dot cur"></i>현재 위치</span><span><i class="lg-dot reach"></i>이동 가능</span><span>⚑ 목적지</span>
+            <span><i class="lg-line subway"></i>🚇 지하철 (호선 색)</span><span><i class="lg-line bus"></i>🚌 버스</span><span><i class="lg-line walk"></i>🚶 도보</span>
+            <span class="muted">역을 누르면 구간 위에 소요 시간(분)이 떠요</span>
+          </div>
+        </div>
       </div>
       <div class="panel" id="panel-log">
         <button type="button" class="panel-title" aria-expanded="true">내 이동 기록</button>
@@ -152,13 +172,6 @@
         <button class="mode" data-mode="bus">🚌<span>버스</span></button>
         <button class="mode" data-mode="walk">🚶<span>도보</span></button>
       </div>
-    </div>
-    <div class="info">
-      <div id="info-xfer" class="xfer"></div>
-    </div>
-    <div class="round-options">
-      <p id="move-warning" class="move-warning hidden" role="status"></p>
-      <button class="btn giveup" id="btn-giveup">라운드 포기</button>
     </div>
   </footer>
 
@@ -204,6 +217,7 @@
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=e391418a0c006300e0593a7360180734&autoload=false"></script>
 
 <!-- 기존 JavaScript -->
+<script src="geo.js"></script>
 <script src="game.js"></script>
 <script src="ui.js"></script>
 

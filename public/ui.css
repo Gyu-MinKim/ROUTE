@@ -294,7 +294,6 @@ footer { display:grid; grid-template-columns:minmax(350px,1.35fr) minmax(180px,1
   .home-description { font-size:14px; }
   .home-facts { gap:20px; }
   .level-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .hud-btns #btn-help { display:none; }
   .selection-header .eyebrow { width:100%; }
   .selection-header strong { flex:1; }
   #btn-clear-selection { margin:0; }
@@ -474,3 +473,121 @@ body.reduce .kakao-current { animation:none; }
 .coach-section:last-child { padding-bottom:0; }
 .coach-section h3 { margin:0; font-size:12px; font-weight:700; }
 .route-coach [hidden] { display:none; }
+
+/* ── 공통 헤더 · 오른쪽 탭 · 메뉴/도움말 ── */
+.home-nav { justify-content:flex-end; }
+.home-title { font-size:clamp(64px,8vw,104px); line-height:1; letter-spacing:-.05em; font-weight:850; margin:0 0 36px; }
+.home-title em { font-style:normal; color:var(--accent); }
+.mode-entry strong { margin-bottom:6px; }
+
+/* 공통 헤더: 왼쪽(뒤로 · ROUTE) / 가운데(화면 이름) / 오른쪽(정보 · 버튼) */
+.app-bar { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:16px; min-height:56px; }
+.app-bar .brand { justify-self:start; display:flex; align-items:center; gap:12px; min-width:0; }
+.brand-word { min-height:44px; padding:0 6px; border:0; border-radius:10px; background:transparent; font:850 20px Inter,"Noto Sans KR",sans-serif; letter-spacing:.08em; color:var(--ink); cursor:pointer; }
+.brand-word:hover { color:var(--accent); }
+.app-title { margin:0; font-size:18px; font-weight:750; text-align:center; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:42vw; }
+.app-actions { justify-self:end; display:flex; align-items:center; gap:8px; }
+#game header.app-bar { flex-wrap:nowrap; }
+#game header .hud { width:auto; order:0; display:flex; flex-direction:row; align-items:center; gap:14px; height:44px; padding:0 16px; border-radius:12px; border:0; background:var(--ink); color:var(--bg); font-size:15px; }
+#game header .hud>span:not(.sep) { display:flex; flex-direction:row; align-items:center; gap:6px; }
+#game header .hud b { display:inline; font-size:17px; color:var(--bg); font-weight:800; }
+#game header .hud .sep { width:1px; height:18px; background:var(--bg); opacity:.35; }
+#game header .hud b.low-resource { color:#ffb3b9!important; }
+.hud-btns .icon { background:var(--panel); border:1px solid var(--line); color:var(--ink); font-size:18px; font-weight:750; display:flex; align-items:center; justify-content:center; }
+.levels-head.app-bar { margin-bottom:28px; }
+.levels-head .app-title { font-size:22px; }
+
+/* 지도 위: 지도 전환 · 포기 안내 · 출처 */
+.map-switch { top:12px; }
+.round-options { position:absolute; z-index:6; top:12px; left:50%; transform:translateX(-50%); width:min(460px,calc(100% - 24px)); display:none; align-items:center; gap:10px 14px; flex-wrap:wrap; padding:12px 14px; background:var(--panel); border:1px solid var(--accent); border-radius:12px; box-shadow:0 10px 28px rgba(0,0,0,.18); }
+.round-options.show { display:flex; }
+.round-options .giveup { margin-inline-start:auto; }
+.map-attrib { position:absolute; right:10px; bottom:8px; z-index:3; font-size:11px; padding:2px 6px; border-radius:6px; background:var(--panel); opacity:.9; }
+.map-attrib a { color:var(--muted); }
+.map-wrap.kakao-active .map-attrib, .map-wrap.kakao-active .round-options { display:none; }
+
+/* 오른쪽 탭 */
+.aside-tabs { display:flex; gap:4px; padding:4px; border:1px solid var(--line); border-radius:12px; background:var(--panel); flex-shrink:0; }
+.aside-tabs button { flex:1; min-height:40px; border:0; border-radius:9px; background:transparent; color:var(--muted); font-size:13px; font-weight:750; cursor:pointer; }
+.aside-tabs button[aria-selected="true"] { background:var(--ink); color:var(--bg); }
+aside .panel-title { display:none; }
+aside .panel.tab-off { display:none!important; }
+aside .panel { padding-top:14px; }
+.info-body { padding:0 16px 16px; display:flex; flex-direction:column; gap:16px; }
+.info-stam { display:none; }
+body.has-stam .info-stam { display:block; }
+.info-row { display:flex; justify-content:space-between; font-size:13px; font-weight:700; margin-bottom:6px; }
+.info-stam .stam-bar { display:block; width:100%; height:8px; border-radius:4px; background:var(--line); margin:0; }
+.info-stam .stam-bar i { display:block; height:100%; border-radius:4px; background:var(--accent); }
+.info-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:0; }
+.info-grid>div { padding:10px 12px; border-radius:10px; background:var(--bg); min-width:0; }
+.info-grid dt { font-size:11px; color:var(--muted); font-weight:700; }
+.info-grid dd { margin:2px 0 0; font-size:15px; font-weight:750; color:var(--ink); overflow-wrap:anywhere; }
+.info-grid dd.xfer { font-size:12px; font-weight:650; }
+.info-legend { display:flex; flex-direction:column; gap:6px; font-size:12px; color:var(--ink); }
+.lg-dot { display:inline-block; width:12px; height:12px; border-radius:4px; margin-right:6px; vertical-align:-1px; background:var(--panel); border:2px solid var(--edge); }
+.lg-dot.cur { background:var(--accent); border-color:var(--accent); }
+.lg-dot.reach { border:3px solid #587c62; }
+
+/* 메뉴 · 도움말 */
+.modal-actions .btn.danger { background:var(--panel); }
+.help-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+.help-list { margin:0 0 14px; padding-left:20px; font-size:13px; }
+.help-list li { margin-bottom:6px; }
+.help-legend { list-style:none; margin:0; padding:0; font-size:13px; display:flex; flex-direction:column; gap:6px; }
+.help-source { display:grid; grid-template-columns:96px 1fr; gap:10px 14px; margin:0; font-size:13px; }
+.help-source dt { font-weight:750; color:var(--muted); }
+.help-source dd { margin:0; }
+.help-source small { color:var(--muted); }
+
+/* 넓은 화면: 하단 창 숨김 (수단은 역 옆 팝오버) */
+@media(min-width:801px) {
+  #game footer { display:none; }
+  .tutorial { bottom:28px; }
+}
+@media(max-width:800px) {
+  .home-title { font-size:64px; margin-bottom:24px; }
+  .app-bar { grid-template-columns:auto minmax(0,1fr) auto; grid-template-areas:"brand title btns" "hud hud hud"; gap:8px 10px; }
+  .app-bar .brand { grid-area:brand; }
+  .app-bar .brand-word { font-size:17px; padding:0 2px; }
+  .app-title { grid-area:title; max-width:none; font-size:16px; }
+  .app-bar .app-actions { display:contents; }
+  .levels-head .app-actions { display:flex; grid-area:btns; }
+  #game header .hud { grid-area:hud; justify-content:space-between; width:100%; box-sizing:border-box; }
+  .hud-btns { grid-area:btns; justify-self:end; }
+  .round-options { top:auto; bottom:52px; }
+}
+
+/* ── 게임 지도: 실제 지형 · 노선 색 · 갈 수 있는 구간 강조 ── */
+.map-grid { stroke:var(--edge); stroke-opacity:.12; stroke-width:1; fill:none; pointer-events:none; }
+.geo-park { fill:var(--park); opacity:.55; pointer-events:none; }
+.geo-water { fill:none; stroke:var(--water); stroke-linecap:round; stroke-linejoin:round; pointer-events:none; }
+.geo-label { font-size:12px; pointer-events:none; paint-order:stroke; stroke:var(--map); stroke-width:3px; }
+.geo-label.park { fill:#7e9a72; text-anchor:middle; }
+.geo-label.water { fill:#6b97ad; font-style:italic; }
+body.dark .geo-label.park { fill:#9db394; }
+body.dark .geo-label.water { fill:#8fb7c9; }
+.edge { stroke-linecap:round; }
+.edge.idle { stroke-width:4; opacity:.32; }
+.edge.idle.m-bus, .edge.idle.m-walk { stroke:var(--edge)!important; opacity:.8; stroke-width:3; }
+.edge.act { stroke-width:7; opacity:1; }
+.edge.used { stroke-width:8; opacity:1; }
+.edge.hot { stroke-width:10; opacity:1; stroke-opacity:1; }
+.edge.casing { stroke:var(--ink); stroke-width:15; opacity:.28; }
+.edge.m-bus { stroke-dasharray:12 8; }
+.edge.m-walk { stroke-dasharray:1 9; }
+.edge.m-walk.act, .edge.m-walk.hot, .edge.m-walk.used { stroke-width:5; }
+.edge.idle.m-walk { stroke-dasharray:1 7; }
+.node { fill:var(--panel); stroke:#56645f; stroke-width:3; }
+.node.quiet { stroke:var(--edge); stroke-width:2.5; }
+.node.reach { stroke:#2f8a55; stroke-width:4; }
+.node.reach.sel, .node.sel { fill:var(--panel); stroke:#d97706; stroke-width:5; }
+.node.dest { stroke:var(--ink); stroke-width:3.5; }
+.node.cur { fill:var(--accent); stroke:var(--panel); stroke-width:4; }
+.xfer-ring { fill:var(--panel); stroke:var(--edge); stroke-width:1.5; }
+.station-target[role="button"]:hover .node { stroke:#d97706; }
+.label.quiet { font-size:12px; font-weight:500; opacity:.7; }
+.lg-line { display:inline-block; width:28px; height:0; margin-right:6px; vertical-align:middle; border-top:4px solid; }
+.lg-line.subway { border-top-color:#747F00; }
+.lg-line.bus { border-top:4px dashed #E8590C; }
+.lg-line.walk { border-top:4px dotted #6b7280; }
